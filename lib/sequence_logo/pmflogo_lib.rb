@@ -108,10 +108,12 @@ def create_canvas(x_size, y_size, icd_mode, paper_mode, threshold_lines, pm)
 end
 
 def letter_images(scheme_dir)
- if File.exist?("#{scheme_dir}/a.png")
-    lp = {'A' => "#{scheme_dir}/a.png", 'C' => "#{scheme_dir}/c.png", 'G' => "#{scheme_dir}/g.png", 'T' => "#{scheme_dir}/t.png"}
+ if File.exist?(File.join(scheme_dir,'a.png'))
+    lp = {'A' => File.join(scheme_dir,'a.png'), 'C' => File.join(scheme_dir,'c.png'), 'G' => File.join(scheme_dir,'g.png'), 'T' => File.join(scheme_dir,'t.png')}
+  elsif File.exist?(File.join(scheme_dir,'a.gif'))
+    lp = {'A' => File.join(scheme_dir,'a.gif'), 'C' => File.join(scheme_dir,'a.gif'), 'G' => File.join(scheme_dir,'a.gif'), 'T' => File.join(scheme_dir,'a.gif')}
   else
-    lp = {'A' => "#{scheme_dir}/a.gif", 'C' => "#{scheme_dir}/c.gif", 'G' => "#{scheme_dir}/g.gif", 'T' => "#{scheme_dir}/t.gif"}
+    raise "Scheme not exists in folder #{scheme_dir}"
   end
   i_letters = Magick::ImageList.new(lp['A'], lp['C'], lp['G'], lp['T'])
 end
