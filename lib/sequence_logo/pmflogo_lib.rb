@@ -108,10 +108,10 @@ def create_canvas(x_size, y_size, icd_mode, paper_mode, threshold_lines, pm)
 end
 
 def letter_images(scheme_dir)
- if File.exist?(File.join(scheme_dir,'a.png'))
+  if File.exist?(File.join(scheme_dir,'a.png'))
     lp = {'A' => File.join(scheme_dir,'a.png'), 'C' => File.join(scheme_dir,'c.png'), 'G' => File.join(scheme_dir,'g.png'), 'T' => File.join(scheme_dir,'t.png')}
   elsif File.exist?(File.join(scheme_dir,'a.gif'))
-    lp = {'A' => File.join(scheme_dir,'a.gif'), 'C' => File.join(scheme_dir,'a.gif'), 'G' => File.join(scheme_dir,'a.gif'), 'T' => File.join(scheme_dir,'a.gif')}
+    lp = {'A' => File.join(scheme_dir,'a.gif'), 'C' => File.join(scheme_dir,'ñ.gif'), 'G' => File.join(scheme_dir,'g.gif'), 'T' => File.join(scheme_dir,'t.gif')}
   else
     raise "Scheme not exists in folder #{scheme_dir}"
   end
