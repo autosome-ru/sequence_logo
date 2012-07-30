@@ -1,11 +1,9 @@
-$:.unshift File.join(File.dirname(__FILE__),'./../../')
-
 require 'sequence_logo'
 require 'fileutils'
 
 filename = ARGV.shift
 unless filename && File.exist?(filename)
-  puts 'Input filename should be specified'
+  puts 'Existing input file should be specified'
   exit(1)
 end
 
