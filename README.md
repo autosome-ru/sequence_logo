@@ -35,6 +35,7 @@ SequenceLogo consists of three tools:
   Required arguments:
     * input_file can be either in PCM format (file extension should be .pat or .pcm), or in FASTA format (file extensions: .mfa, .fasta, .plain), or in SMall BiSMark format (.xml), or in IUPAC format (any other extension).
     * output_logo_filename is output logo file with format .png (extension should be included into name) which will be generated
+    
   Optional parameters:
     * words_count [=default] is a float number that represents alignment weight. If words_count is set to 'default' - it'd be obtained from input (if it's PCM or IUPAC). In some cases (when PPM is used) words_count can't be obtained. In such a case discrete logo can't be drawn, and weblogo will be drawn instead.
     * x_unit - width of a single letter
@@ -50,6 +51,7 @@ SequenceLogo consists of three tools:
   `generate_logo <motif_filename> [logo_folder = directory of input motif file]`
 
 * Tool **create_all_logos** generates two logos - direct and reverse-complement with some reasonable defaults for each motif in a folder and puts all logos in a logo_folder
+
   `create_all_logos <motifs_folder> <logo_folder>`
  
  
