@@ -22,9 +22,13 @@ Or install it yourself as:
 
 SequenceLogo consists of three tools:
 * The most flexible tool **pmflogo** generates single logo for a single motif. It has quite complicated usage format:
-  `pmflogo \<input_file\> \<output_logo_filename\> [words_count] [x_unit=100] [y_size=200] [icd_mode=discrete|weblogo] [revcomp=no|yes] [scheme=nucl_simpa] [paper_mode=no|yes] [threshold_lines=yes|no]`
+  
+  `pmflogo <input_file> <output_logo_filename> [words_count] [x_unit=100] [y_size=200] [icd_mode=discrete|weblogo] [revcomp=no|yes] [scheme=nucl_simpa] [paper_mode=no|yes] [threshold_lines=yes|no]`
+  
   Any optional argument can be set as 'default' e.g.
+  
   `pmflogo motif.pcm logo.png default 30 60 default yes`
+  
   skipped parameters are also substituted as default (in example above icd_mode is default, and also scheme, paper_mode and threshold_lines)
 
 
@@ -42,10 +46,11 @@ SequenceLogo consists of three tools:
     * threshold_lines - lines on levels: icd2of4, icdThc(=icd3of4), icdTlc, - relative to icd4of4
   
 * Tool **generate_logo** generates two logos - direct and reverse-complement with some reasonable defaults for a single motif and puts a logo in a logo_folder
-  `generate_logo \<motif_filename\> [logo_folder = directory of input motif file]`
+  
+  `generate_logo <motif_filename> [logo_folder = directory of input motif file]`
 
 * Tool **create_all_logos** generates two logos - direct and reverse-complement with some reasonable defaults for each motif in a folder and puts all logos in a logo_folder
-  `create_all_logos \<motifs_folder\> \<logo_folder\>`
+  `create_all_logos <motifs_folder> <logo_folder>`
  
  
 ## Contributing
