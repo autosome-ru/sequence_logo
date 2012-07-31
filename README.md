@@ -23,7 +23,7 @@ Or install it yourself as:
 SequenceLogo consists of three tools:
 * The most flexible tool **pmflogo** generates single logo for a single motif. It has quite complicated usage format:
   
-  `pmflogo <input_file> <output_logo_filename> [words_count] [x_unit=100] [y_size=200] [icd_mode=discrete|weblogo] [revcomp=no|yes] [scheme=nucl_simpa] [paper_mode=no|yes] [threshold_lines=yes|no]`
+    pmflogo <input_file> <output_logo_filename> [words_count] [x_unit=100] [y_size=200] [icd_mode=discrete|weblogo] [revcomp=no|yes] [scheme=nucl_simpa] [paper_mode=no|yes] [threshold_lines=yes|no]`
   
   Any optional argument can be set as 'default' e.g.
   
