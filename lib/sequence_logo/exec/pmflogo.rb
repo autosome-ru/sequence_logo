@@ -23,4 +23,7 @@ options[:icd_mode], options[:revcomp], options[:scheme], options[:paper_mode], o
 
 options.reject!{|k,v| v.nil?}
 
-draw_logo(input_file, output_logo_filename, options)
+ppm = get_ppm_from_file(filename)
+checkerr("bad input file") { ppm == nil }
+
+draw_logo(ppm, options).write(output_logo_filename)

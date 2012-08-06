@@ -1,6 +1,12 @@
 require 'sequence_logo/ytilib'
 require 'RMagick'
 
+class Object
+  def deep_dup
+    Marshal.load(Marshal.dump(self))
+  end
+end
+
 class PPM
   def get_ppm
     self
@@ -57,7 +63,7 @@ class PPM
   end
 end
 
-def get_ppm_from_file(in_file_name, words_count)
+def get_ppm_from_file(in_file_name)
   case File.ext_wo_name(in_file_name)
   when 'pat', 'pcm'
     pm = PM.load(in_file_name)
@@ -69,29 +75,31 @@ def get_ppm_from_file(in_file_name, words_count)
   when in_file_name
     pm = PPM.from_IUPAC(in_file_name.upcase)
   end
-  pm = pm.get_ppm
-  pm.words_count = words_count  if words_count
-  pm
+  pm.get_ppm
+rescue
+  nil
 end
 
-def create_canvas(x_size, y_size, icd_mode, paper_mode, threshold_lines, pm)
+def create_canvas(ppm, options)
+  x_size = options[:x_unit] * ppm.length
+  y_size = options[:y_size]
   
   i_logo = Magick::ImageList.new
-  if paper_mode
+  if options[:paper_mode]
     i_logo.new_image(x_size, y_size)
   else
-    if icd_mode == :discrete
+    if options[:icd_mode] == :discrete
       i_logo.new_image(x_size, y_size, Magick::HatchFill.new('white', 'white'))
-      if threshold_lines
+      if options[:threshold_lines]
         dr = Magick::Draw.new
         dr.fill('transparent')
         
         dr.stroke_width(y_size / 200.0)
         dr.stroke_dasharray(7,7)
         
-        line2of4 = y_size - pm.get_line(pm.icd2of4) * y_size
-        lineThc = y_size - pm.get_line(pm.icdThc) * y_size
-        lineTlc = y_size - pm.get_line(pm.icdTlc) * y_size
+        line2of4 = y_size - ppm.get_line(ppm.icd2of4) * y_size
+        lineThc = y_size - ppm.get_line(ppm.icdThc) * y_size
+        lineTlc = y_size - ppm.get_line(ppm.icdTlc) * y_size
         
         dr.stroke('silver')
         dr.line(0, line2of4, x_size, line2of4)
@@ -118,7 +126,10 @@ def letter_images(scheme_dir)
   Magick::ImageList.new(lp['A'], lp['C'], lp['G'], lp['T'])
 end
 
-def draw_letters_on_canvas(i_logo, i_letters, matrix, y_size, x_unit)
+def draw_letters_on_canvas(i_logo, i_letters, ppm, options)
+  y_size = options[:y_size]
+  x_unit = options[:x_unit]
+  matrix = ppm.get_logo(options[:icd_mode])
   matrix['A'].each_index { |i|
     y_pos = 0
     sorted_letters = ['A', 'C', 'G', 'T'].collect { |letter| {:score => matrix[letter][i], :letter => letter} }.sort_by { |pair| pair[:score] }.collect { |pair| pair[:letter] }.reverse
@@ -156,42 +167,30 @@ def process_options_hash_for_logo(options = {})
   options
 end
 
-def draw_logo(in_file_name, out_file_name, options = {})
+def draw_logo(ppm, options = {})
   options = process_options_hash_for_logo(options)
   
-  x_unit = options[:x_unit]
-  y_size = options[:y_size]
-  icd_mode = options[:icd_mode]
-  scheme = options[:scheme]
-  words_count = options[:words_count]
-  revcomp = options[:revcomp]
-  paper_mode = options[:paper_mode]
-  threshold_lines = options[:threshold_lines]
+  ppm.words_count = options[:words_count]  if options[:words_count]
   
-  ########################
-  
-  pm = get_ppm_from_file(in_file_name, words_count)
-  checkerr("bad input file") { pm == nil }
-  
-  x_size = x_unit * pm.length
-  
-  
-  unless pm.words_count
-    report "words count for PM is undefined, assuming weblogo mode"
-    icd_mode = :weblogo
+  unless ppm.words_count
+    report "words count for PPM is undefined, assuming weblogo mode"
+    options[:icd_mode] = :weblogo
   end
   
-  i_logo = create_canvas(x_size, y_size, icd_mode, paper_mode, threshold_lines, pm)
+  i_logo = create_canvas(ppm, options)
   
-  pm.revcomp! if revcomp
-  matrix = pm.get_logo(icd_mode)
+  ppm = ppm.deep_dup.revcomp! if options[:revcomp]
 
-  scheme_dir = File.join(SequenceLogo::AssetsPath, scheme)
-  i_letters = letter_images(scheme_dir)
-  draw_letters_on_canvas(i_logo, i_letters, matrix, y_size, x_unit)
+  scheme_dir = File.join(SequenceLogo::AssetsPath, options[:scheme])
+  draw_letters_on_canvas(i_logo, letter_images(scheme_dir), ppm, options)
 
   i_logo = i_logo.flatten_images
-  i_logo.cur_image.border!(x_unit / 100 + 1, x_unit / 100 + 1, icd_mode == :discrete ? 'green' : 'red') if paper_mode
-
-  i_logo.write(out_file_name)
+  
+  if options[:paper_mode]
+    border_thickness = options[:x_unit] / 100 + 1
+    border_color = (options[:icd_mode] == :discrete) ? 'green' : 'red'
+    i_logo.cur_image.border!(border_thickness, border_thickness, border_color)
+  end
+  
+  i_logo
 end

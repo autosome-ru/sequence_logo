@@ -14,5 +14,8 @@ filename_wo_ext = File.basename(filename, File.extname(filename))
 direct_output = File.join(logo_dir,"#{filename_wo_ext}_direct.png")
 revcomp_output = File.join(logo_dir,"#{filename_wo_ext}_revcomp.png")
 
-draw_logo(filename, direct_output,  x_unit: 30, y_size: 60, revcomp: 'direct')
-draw_logo(filename, revcomp_output, x_unit: 30, y_size: 60, revcomp: 'revcomp')
+ppm = get_ppm_from_file(filename)
+checkerr("bad input file") { ppm == nil }
+
+draw_logo(ppm, x_unit: 30, y_size: 60, revcomp: 'direct').write(direct_output)
+draw_logo(ppm, x_unit: 30, y_size: 60, revcomp: 'revcomp').write(revcomp_output)

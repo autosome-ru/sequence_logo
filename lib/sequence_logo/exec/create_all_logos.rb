@@ -20,6 +20,10 @@ Dir.glob(File.join(motifs_folder, '*')).to_enum.each do |filename|
   direct_output = File.join(logo_folder,"#{filename_wo_ext}_direct.png")
   revcomp_output = File.join(logo_folder,"#{filename_wo_ext}_revcomp.png")
 
-  draw_logo(filename, direct_output, words_count: 'default', x_unit: 30, y_size: 60, icd_mode: 'discrete', revcomp: 'direct')
-  draw_logo(filename, revcomp_output, words_count: 'default', x_unit: 30, y_size: 60, icd_mode: 'discrete', revcomp: 'revcomp')
+  ppm = get_ppm_from_file(filename)
+  checkerr("bad input file") { ppm == nil }
+  
+  options = {words_count: 'default', x_unit: 30, y_size: 60, icd_mode: 'discrete'}
+  draw_logo(ppm, options.merge(revcomp: 'direct')).write(direct_output)
+  draw_logo(ppm, options.merge(revcomp: 'revcomp')).write(revcomp_output)
 end
