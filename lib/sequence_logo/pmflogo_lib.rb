@@ -115,7 +115,7 @@ def letter_images(scheme_dir)
   else
     raise "Scheme not exists in folder #{scheme_dir}"
   end
-  i_letters = Magick::ImageList.new(lp['A'], lp['C'], lp['G'], lp['T'])
+  Magick::ImageList.new(lp['A'], lp['C'], lp['G'], lp['T'])
 end
 
 def draw_letters_on_canvas(i_logo, i_letters, matrix, y_size, x_unit)
@@ -133,8 +133,7 @@ def draw_letters_on_canvas(i_logo, i_letters, matrix, y_size, x_unit)
   }
 end
 
-
-def draw_logo(in_file_name, out_file_name, options = {})
+def process_options_hash_for_logo(options = {})
   default_options = { words_count: nil,
                       x_unit: 100,
                       y_size: 200,
@@ -143,26 +142,31 @@ def draw_logo(in_file_name, out_file_name, options = {})
                       scheme: 'nucl_simpa',
                       paper_mode: false,
                       threshold_lines: true }
-
+  
   options = options.reject{|k,v| v == 'default' || v == :default}
   options = default_options.merge( options )
+  options[:x_unit] = options[:x_unit].to_i
+  options[:y_size] = options[:y_size].to_i
+  options[:icd_mode] = options[:icd_mode].to_sym
+  options[:words_count] = options[:words_count].to_f  if options[:words_count]
+  options[:revcomp] = false  if options[:revcomp] == 'no' || options[:revcomp] == 'false' || options[:revcomp] == 'direct'
+  options[:paper_mode] = false  if options[:paper_mode] == 'no' || options[:paper_mode] == 'false'
+  options[:threshold_lines] = false  if options[:threshold_lines] == 'no' || options[:threshold_lines] == 'false'
+  
+  options
+end
 
-  x_unit = options[:x_unit].to_i
-  y_size = options[:y_size].to_i
-  icd_mode = options[:icd_mode].to_sym
+def draw_logo(in_file_name, out_file_name, options = {})
+  options = process_options_hash_for_logo(options)
+  
+  x_unit = options[:x_unit]
+  y_size = options[:y_size]
+  icd_mode = options[:icd_mode]
   scheme = options[:scheme]
-  
   words_count = options[:words_count]
-  words_count = words_count.to_f  if words_count
-  
   revcomp = options[:revcomp]
-  revcomp = false  if revcomp == 'no' || revcomp == 'false' || revcomp == 'direct'
-  
   paper_mode = options[:paper_mode]
-  paper_mode = false  if paper_mode == 'no' || paper_mode == 'false'
-
   threshold_lines = options[:threshold_lines]
-  threshold_lines = false  if threshold_lines == 'no' || threshold_lines == 'false'
   
   ########################
   
@@ -187,7 +191,7 @@ def draw_logo(in_file_name, out_file_name, options = {})
   draw_letters_on_canvas(i_logo, i_letters, matrix, y_size, x_unit)
 
   i_logo = i_logo.flatten_images
-  i_logo.cur_image.border!(x_unit / 100 + 1, x_unit / 100 + 1, icd_mode == :discrete ? "green" : "red") if paper_mode
+  i_logo.cur_image.border!(x_unit / 100 + 1, x_unit / 100 + 1, icd_mode == :discrete ? 'green' : 'red') if paper_mode
 
   i_logo.write(out_file_name)
 end
