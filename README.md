@@ -23,7 +23,7 @@ Or install it yourself as:
 SequenceLogo consists of three tools:
 * The most flexible tool **pmflogo** generates single logo for a single motif. It has quite complicated usage format:
   
-    pmflogo \<input_file\> \<output_logo_filename\> [words_count] [x_unit=100] [y_size=200] [icd_mode=discrete|weblogo] [revcomp=no|yes] [scheme=nucl_simpa] [paper_mode=no|yes] [threshold_lines=yes|no]
+    pmflogo \<input_file\> \<output_logo_filename\> [words_count] [x_unit=100] [y_unit=200] [icd_mode=discrete|weblogo] [revcomp=no|yes] [scheme=nucl_simpa] [paper_mode=no|yes] [threshold_lines=yes|no]
   
   Any optional argument can be set as 'default', skipped parameters are also substituted as default (in example below icd_mode is default, and also scheme, paper_mode and threshold_lines): `pmflogo motif.pcm logo.png default 30 60 default yes`
 
@@ -34,7 +34,7 @@ SequenceLogo consists of three tools:
   Optional parameters:
     * words_count [=default] is a float number that represents alignment weight. If words_count is set to 'default' - it'd be obtained from input (if it's PCM or IUPAC). In some cases (when PPM is used) words_count can't be obtained. In such a case discrete logo can't be drawn, and weblogo will be drawn instead.
     * x_unit - width of a single letter
-    * y_size - full height of an image
+    * y_unit - height of a letter
     * icd_mode - information content mode
     * revcomp - create logo for a direct or reverse-complement orientation
     * scheme - nucleotide images folder name (by default only one scheme is used)
