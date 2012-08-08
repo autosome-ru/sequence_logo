@@ -17,5 +17,5 @@ revcomp_output = File.join(logo_dir,"#{filename_wo_ext}_revcomp.png")
 ppm = get_ppm_from_file(filename)
 checkerr("bad input file") { ppm == nil }
 
-draw_logo(ppm, x_unit: 30, y_size: 60, revcomp: 'direct').write(direct_output)
-draw_logo(ppm, x_unit: 30, y_size: 60, revcomp: 'revcomp').write(revcomp_output)
+draw_logo(ppm, x_unit: 30, y_unit: 60, revcomp: 'direct').write(direct_output)
+draw_logo(ppm, x_unit: 30, y_unit: 60, revcomp: 'revcomp').write(revcomp_output)

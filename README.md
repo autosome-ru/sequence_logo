@@ -45,9 +45,9 @@ SequenceLogo consists of three tools:
   
     generate_logo \<motif_filename\> [logo_folder = directory of input motif file]
 
-* Tool **create_all_logos** generates two logos - direct and reverse-complement with some reasonable defaults for each motif in a folder and puts all logos in a logo_folder
+* Tool **generate_all_logos** generates two logos - direct and reverse-complement with some reasonable defaults for each motif in a folder and puts all logos in a logo_folder
 
-    create_all_logos \<motifs_folder> \<logo_folder>
+    generate_all_logos \<motifs_folder> \<logo_folder>
  
  
 ## Contributing

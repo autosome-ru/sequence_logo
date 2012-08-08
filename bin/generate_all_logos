@@ -1,0 +1,3 @@
+#!/usr/bin/env ruby
+
+require 'sequence_logo/exec/generate_all_logos.rb'
