@@ -3,7 +3,7 @@
 #   pmflogo motif.pcm logo.png default 30 60 default yes
 # skipped parameters are also substituted as default (in example above icd_mode is default, and also scheme, paper_mode and threshold_lines)
 
-require 'sequence_logo'
+require_relative '../../sequence_logo'
 
 if ARGV.size < 2
   puts('At least two arguments must be specified, see usage of pmflogo')

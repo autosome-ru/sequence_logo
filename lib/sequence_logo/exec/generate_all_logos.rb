@@ -1,4 +1,4 @@
-require 'sequence_logo'
+require_relative '../../sequence_logo'
 require 'fileutils'
 
 motifs_folder = ARGV.shift

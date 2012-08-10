@@ -225,10 +225,13 @@ end
 # ppms {ppm => shift}
 def glue_ppms(ppms, output_file, logo_shift = 300, x_unit = 30, y_unit = 60)
   logos = {}
+  filenames = []
   ppms.each do |ppm, motif_shift|
     name = "#{name}_tmp.png"
+    filenames << name
     draw_logo(ppm, x_unit: x_unit, y_unit: y_unit, revcomp: 'direct').write(name)
     logos[name] = {length: ppm.length, name: ppm.name, shift: motif_shift}
   end
   glue_files(logos, output_file, logo_shift, x_unit, y_unit)
+  filenames.each{|filename| File.delete(filename)}
 end
