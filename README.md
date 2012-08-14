@@ -23,9 +23,9 @@ Or install it yourself as:
 SequenceLogo consists of three tools:
 * The most flexible tool **pmflogo** generates single logo for a single motif. It has quite complicated usage format:
   
-    pmflogo \<input_file\> \<output_logo_filename\> [words_count] [x_unit=100] [y_unit=200] [icd_mode=discrete|weblogo] [revcomp=no|yes] [scheme=nucl_simpa] [paper_mode=no|yes] [threshold_lines=yes|no]
+    pmflogo \<input_file\> \<output_logo_filename\> [words_count] [x_unit=100] [y_unit=200] [icd_mode=discrete|weblogo] [revcomp=no|yes] [scheme=nucl_simpa] [threshold_lines=yes|no]
   
-  Any optional argument can be set as 'default', skipped parameters are also substituted as default (in example below icd_mode is default, and also scheme, paper_mode and threshold_lines): `pmflogo motif.pcm logo.png default 30 60 default yes`
+  Any optional argument can be set as 'default', skipped parameters are also substituted as default (in example below icd_mode is default, and also scheme and threshold_lines): `pmflogo motif.pcm logo.png default 30 60 default yes`
 
   Required arguments:
     * input_file can be either in PCM format (file extension should be .pat or .pcm), or in FASTA format (file extensions: .mfa, .fasta, .plain), or in SMall BiSMark format (.xml), or in IUPAC format (any other extension).
@@ -38,7 +38,6 @@ SequenceLogo consists of three tools:
     * icd_mode - information content mode
     * revcomp - create logo for a direct or reverse-complement orientation
     * scheme - nucleotide images folder name (by default only one scheme is used)
-    * paper_mode - if paper_mode is true then threshold lines won't be drawn but a border is drawn instead
     * threshold_lines - lines on levels: icd2of4, icdThc(=icd3of4), icdTlc, - relative to icd4of4
   
 * Tool **generate_logo** generates two logos - direct and reverse-complement with some reasonable defaults for a single motif and puts a logo in a logo_folder

@@ -29,16 +29,15 @@ module SequenceLogo
     y_size = options[:y_unit]
     
     i_logo = Magick::ImageList.new
-    if options[:paper_mode]
-      i_logo.new_image(x_size, y_size)
+    
+    
+    if options[:icd_mode] == :discrete
+      i_logo.new_image(x_size, y_size, Magick::HatchFill.new('white', 'white'))
+      draw_threshold_lines(i_logo, ppm)  if options[:threshold_lines]
     else
-      if options[:icd_mode] == :discrete
-        i_logo.new_image(x_size, y_size, Magick::HatchFill.new('white', 'white'))
-        draw_threshold_lines(i_logo, ppm)  if options[:threshold_lines]
-      else
-        i_logo.new_image(x_size, y_size, Magick::HatchFill.new('white', 'bisque'))
-      end
+      i_logo.new_image(x_size, y_size, Magick::HatchFill.new('white', 'bisque'))
     end
+  
     i_logo
   end
 
@@ -80,7 +79,6 @@ module SequenceLogo
                         icd_mode: 'discrete',
                         revcomp: false,
                         scheme: 'nucl_simpa',
-                        paper_mode: false,
                         threshold_lines: true }
     
     options = options.reject{|k,v| v == 'default' || v == :default}
@@ -90,7 +88,6 @@ module SequenceLogo
     options[:icd_mode] = options[:icd_mode].to_sym
     options[:words_count] = options[:words_count].to_f  if options[:words_count]
     options[:revcomp] = false  if options[:revcomp] == 'no' || options[:revcomp] == 'false' || options[:revcomp] == 'direct'
-    options[:paper_mode] = false  if options[:paper_mode] == 'no' || options[:paper_mode] == 'false'
     options[:threshold_lines] = false  if options[:threshold_lines] == 'no' || options[:threshold_lines] == 'false'
     
     options
@@ -115,11 +112,6 @@ module SequenceLogo
 
     i_logo = i_logo.flatten_images
     
-    if options[:paper_mode]
-      border_thickness = options[:x_unit] / 100 + 1
-      border_color = (options[:icd_mode] == :discrete) ? 'green' : 'red'
-      i_logo.cur_image.border!(border_thickness, border_thickness, border_color)
-    end
     
     i_logo
   end
