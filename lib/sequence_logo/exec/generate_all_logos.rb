@@ -1,5 +1,19 @@
 require_relative '../../sequence_logo'
 require 'fileutils'
+require 'optparse'
+
+
+options = {words_count: 'default', x_unit: 30, y_unit: 60, icd_mode: 'discrete'}
+OptionParser.new do |opts|
+  opts.banner = "Usage: generate_all_logos [options]"
+
+  opts.on("-x", "--x-unit X_UNIT", "Set letter width") do |v|
+    options[:x_unit] = v
+  end
+  opts.on("-y", "--y-unit Y_UNIT", "Set base letter height") do |v|
+    options[:y_unit] = v
+  end
+end.parse!
 
 motifs_folder = ARGV.shift
 unless motifs_folder && Dir.exist?(motifs_folder)
@@ -23,7 +37,7 @@ Dir.glob(File.join(motifs_folder, '*')).to_enum.each do |filename|
   ppm = get_ppm_from_file(filename)
   checkerr("bad input file") { ppm == nil }
   
-  options = {words_count: 'default', x_unit: 30, y_unit: 60, icd_mode: 'discrete'}
+  
   draw_logo(ppm, options.merge(revcomp: 'direct')).write(direct_output)
   draw_logo(ppm, options.merge(revcomp: 'revcomp')).write(revcomp_output)
 end
