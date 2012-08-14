@@ -1,3 +1,9 @@
+class Object
+  def deep_dup
+    Marshal.load(Marshal.dump(self))
+  end
+end
+
 def get_ppm_from_file(in_file_name)
   case File.ext_wo_name(in_file_name)
   when 'pat', 'pcm'
@@ -70,5 +76,9 @@ class PPM
     }
     
     mat
+  end
+  
+  def revcomp
+    deep_dup.revcomp!
   end
 end

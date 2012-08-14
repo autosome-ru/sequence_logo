@@ -1,14 +1,7 @@
 require 'sequence_logo/ytilib'
 require 'RMagick'
 
-class Object
-  def deep_dup
-    Marshal.load(Marshal.dump(self))
-  end
-end
-
 module SequenceLogo
-
   def self.draw_threshold_lines(i_logo, ppm)
     x_size = i_logo.columns
     y_size = i_logo.rows
@@ -115,7 +108,7 @@ module SequenceLogo
     
     i_logo = create_canvas(ppm, options)
     
-    ppm = ppm.deep_dup.revcomp! if options[:revcomp]
+    ppm = ppm.revcomp if options[:revcomp]
 
     scheme_dir = File.join(AssetsPath, options[:scheme])
     draw_letters_on_canvas(i_logo, letter_images(scheme_dir), ppm, options)
