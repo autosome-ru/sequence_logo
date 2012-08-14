@@ -26,4 +26,4 @@ options.reject!{|k,v| v.nil?}
 ppm = get_ppm_from_file(input_file)
 checkerr("bad input file") { ppm == nil }
 
-draw_logo(ppm, options).write(output_logo_filename)
+SequenceLogo.draw_logo(ppm, options).write(output_logo_filename)

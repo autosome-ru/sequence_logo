@@ -35,9 +35,9 @@ Dir.glob(File.join(motifs_folder, '*')).to_enum.each do |filename|
   revcomp_output = File.join(logo_folder,"#{filename_wo_ext}_revcomp.png")
 
   ppm = get_ppm_from_file(filename)
-  checkerr("bad input file") { ppm == nil }
+  checkerr("bad input file: #{filename}") { ppm == nil }
   
   
-  draw_logo(ppm, options.merge(revcomp: 'direct')).write(direct_output)
-  draw_logo(ppm, options.merge(revcomp: 'revcomp')).write(revcomp_output)
+  SequenceLogo.draw_logo(ppm, options.merge(revcomp: 'direct')).write(direct_output)
+  SequenceLogo.draw_logo(ppm, options.merge(revcomp: 'revcomp')).write(revcomp_output)
 end

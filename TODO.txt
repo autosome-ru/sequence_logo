@@ -7,3 +7,8 @@ pwm3 direct shift3
 
 in order to be able to pipeline with macroape's align_motifs:
 align_motifs <pcm1> <pcm2> <pcm3> | glue_logos <output_logo>
+
+
+
+
+Fix issue: generate_all_logos fails when runned with current folder as input folder and output folder inside it: it tries to process folders in input_folder as other files and fails on folder logo (or any other file)
