@@ -8,6 +8,29 @@ class Object
 end
 
 module SequenceLogo
+
+  def self.draw_threshold_lines(i_logo, ppm)
+    x_size = i_logo.columns
+    y_size = i_logo.rows
+    
+    line2of4 = y_size - ppm.get_line(ppm.icd2of4) * y_size
+    lineThc = y_size - ppm.get_line(ppm.icdThc) * y_size
+    lineTlc = y_size - ppm.get_line(ppm.icdTlc) * y_size
+    
+    dr = Magick::Draw.new
+    dr.fill('transparent')
+    
+    dr.stroke_width(y_size / 200.0)
+    dr.stroke_dasharray(7,7)
+    
+    dr.stroke('silver')
+    dr.line(0, line2of4, x_size, line2of4)
+    dr.line(0, lineThc, x_size, lineThc)
+    dr.line(0, lineTlc, x_size, lineTlc)
+    
+    dr.draw(i_logo)
+  end
+  
   def self.create_canvas(ppm, options)
     x_size = options[:x_unit] * ppm.length
     y_size = options[:y_unit]
@@ -18,24 +41,7 @@ module SequenceLogo
     else
       if options[:icd_mode] == :discrete
         i_logo.new_image(x_size, y_size, Magick::HatchFill.new('white', 'white'))
-        if options[:threshold_lines]
-          dr = Magick::Draw.new
-          dr.fill('transparent')
-          
-          dr.stroke_width(y_size / 200.0)
-          dr.stroke_dasharray(7,7)
-          
-          line2of4 = y_size - ppm.get_line(ppm.icd2of4) * y_size
-          lineThc = y_size - ppm.get_line(ppm.icdThc) * y_size
-          lineTlc = y_size - ppm.get_line(ppm.icdTlc) * y_size
-          
-          dr.stroke('silver')
-          dr.line(0, line2of4, x_size, line2of4)
-          dr.line(0, lineThc, x_size, lineThc)
-          dr.line(0, lineTlc, x_size, lineTlc)
-          
-          dr.draw(i_logo)
-        end
+        draw_threshold_lines(i_logo, ppm)  if options[:threshold_lines]
       else
         i_logo.new_image(x_size, y_size, Magick::HatchFill.new('white', 'bisque'))
       end
