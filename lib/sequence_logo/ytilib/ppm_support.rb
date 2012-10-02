@@ -33,9 +33,10 @@ class PPM
   end
 
   def get_logo(icd_mode)
-    if icd_mode == :weblogo
+    case icd_mode.to_s
+    when 'weblogo'
       get_logo_weblogo
-    else
+    when 'discrete'
       get_logo_discrete
     end
   end

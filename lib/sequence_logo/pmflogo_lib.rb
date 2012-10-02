@@ -1,4 +1,4 @@
-require 'sequence_logo/ytilib'
+require_relative 'ytilib'
 require 'RMagick'
 
 module SequenceLogo
@@ -30,8 +30,7 @@ module SequenceLogo
     
     i_logo = Magick::ImageList.new
     
-    
-    if options[:icd_mode] == :discrete
+    if options[:icd_mode] == 'discrete'
       i_logo.new_image(x_size, y_size, Magick::HatchFill.new('white', 'white'))
       draw_threshold_lines(i_logo, ppm)  if options[:threshold_lines]
     else
@@ -71,49 +70,11 @@ module SequenceLogo
       }
     }
   end
-
-  def self.process_options_hash_for_logo(options = {})
-    default_options = { words_count: nil,
-                        x_unit: 100,
-                        y_unit: 200,
-                        icd_mode: 'discrete',
-                        revcomp: false,
-                        scheme: 'nucl_simpa',
-                        threshold_lines: true }
-    
-    options = options.reject{|k,v| v == 'default' || v == :default}
-    options = default_options.merge( options )
-    options[:x_unit] = options[:x_unit].to_i
-    options[:y_unit] = options[:y_unit].to_i
-    options[:icd_mode] = options[:icd_mode].to_sym
-    options[:words_count] = options[:words_count].to_f  if options[:words_count]
-    options[:revcomp] = false  if options[:revcomp] == 'no' || options[:revcomp] == 'false' || options[:revcomp] == 'direct'
-    options[:threshold_lines] = false  if options[:threshold_lines] == 'no' || options[:threshold_lines] == 'false'
-    
-    options
-  end
-
+  
   def self.draw_logo(ppm, options = {})
-    options = process_options_hash_for_logo(options)
-    
-    ppm.words_count = options[:words_count]  if options[:words_count]
-    
-    unless ppm.words_count
-      report "words count for PPM is undefined, assuming weblogo mode"
-      options[:icd_mode] = :weblogo
-    end
-    
     i_logo = create_canvas(ppm, options)
-    
-    ppm = ppm.revcomp if options[:revcomp]
-
-    scheme_dir = File.join(AssetsPath, options[:scheme])
-    draw_letters_on_canvas(i_logo, letter_images(scheme_dir), ppm, options)
-
-    i_logo = i_logo.flatten_images
-    
-    
-    i_logo
+    draw_letters_on_canvas(i_logo, letter_images(options[:scheme]), ppm, options)
+    i_logo.flatten_images
   end
 
   # logos = { filename => {shift: ..., length: ..., name: ...} }
@@ -153,5 +114,61 @@ module SequenceLogo
     end
     glue_files(logos, output_file, logo_shift, x_unit, y_unit)
     filenames.each{|filename| File.delete(filename)}
+  end
+  
+  module CLI
+    DEFAULT_OPTIONS = { x_unit: 30, y_unit: 60,
+                        #revcomp: false,
+                        orientation: 'direct',
+                        icd_mode: 'discrete',
+                        words_count: nil,
+                        built_in_scheme: true, scheme: 'nucl_simpa',
+                        thresold_lines: true }
+    
+    def self.parse_options(banner, default_options = DEFAULT_OPTIONS)
+      options = default_options
+      OptionParser.new do |opts|
+        opts.banner = banner
+
+        opts.on('-x X_UNIT', '--x-unit X_UNIT', Integer, 'Set letter width'){|v| options[:x_unit] = v }
+        opts.on('-y Y_UNIT', '--y-unit Y_UNIT', Integer, 'Set base letter height'){|v| options[:y_unit] = v }
+        opts.on('-oORIENTATION', '--orientation ORIENTATION', {'d'=>'direct', 'direct'=>'direct',
+                                              'r'=>'revcomp', 'revcomp'=>'revcomp',
+                                              'b'=>'both', 'both'=>'both'}, 'Draw orientations: direct(d)/revcomp(r)/both(b)'){|v| options[:orientation] = v }
+        opts.on('--icd_mode ICD_MODE', %w[discrete weblogo], 'Information content mode: discrete/weblogo (default: discrete)'){ |v| options[:icd_mode] = v }
+        opts.on('--words-count WORDS_COUNT', Float, 'Manually set alignment weight. Particulary useful for PPMs'){|v| options[:words_count] = v }
+        opts.on('--[no-]built-in-scheme', 'Whether load scheme from built-in-gem assets folder or from outside the gem'){|v| options[:built_in_scheme] = v }
+        opts.on('--scheme SCHEME', 'Scheme (images of letters) folder'){|v| options[:scheme] = v }
+        opts.on('--[no-]threshold-lines', 'Draw threshold lines'){|v| options[:thresold_lines] = v }
+      end.parse!
+
+      if options.delete(:built_in_scheme)
+        options[:scheme] = File.expand_path(options[:scheme], SequenceLogo::AssetsPath)
+      end
+   
+      options
+    end
+    
+    def self.draw(ppm, options)
+      orientation = options.delete(:orientation)
+      
+      ppm.words_count = options[:words_count]  if options[:words_count]
+      
+      unless ppm.words_count
+        report "words count for PPM is undefined, assuming weblogo mode"
+        options[:icd_mode] = 'weblogo'
+      end
+      
+      case orientation
+      when 'direct'
+        draw_logo(ppm, options)
+      when 'revcomp'
+        draw_logo(ppm.revcomp, options)
+      when 'both'
+        draw_logo(ppm, options)
+        draw_logo(ppm.revcomp, options)
+      end
+    end
+    
   end
 end
