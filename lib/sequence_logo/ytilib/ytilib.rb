@@ -143,5 +143,5 @@ module Ytilib
 
 end
 
-report "ytilib required, working directory #{Dir.pwd}", "ytilib"
+#report "ytilib required, working directory #{Dir.pwd}", "ytilib"
 include Ytilib
