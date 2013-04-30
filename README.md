@@ -2,7 +2,7 @@
 
 SequenceLogo is a tool for drawing sequence logos of motifs. It gets Positional Count Matrices(PCMs) at input and generates png-logos for motif. Also one can create logo for reverse complement or even generate logos for a whole collection of motifs.
 Sequence logos are a graphical representation of an amino acid or nucleic acid multiple sequence alignment developed by Tom Schneider and Mike Stephens. Each logo consists of stacks of symbols, one stack for each position in the sequence. The overall height of the stack indicates the sequence conservation at that position, while the height of symbols within the stack indicates the relative frequency of each amino or nucleic acid at that position. In general, a sequence logo provides a richer and more precise description of, for example, a binding site, than would a consensus sequence (see http://weblogo.berkeley.edu/)
- 
+
 
 ## Installation
 
@@ -20,35 +20,36 @@ Or install it yourself as:
 
 ## Usage
 
-SequenceLogo consists of three tools:
-* The most flexible tool **pmflogo** generates single logo for a single motif. It has quite complicated usage format:
-  
-    pmflogo \<input_file\> \<output_logo_filename\> [words_count] [x_unit=100] [y_unit=200] [icd_mode=discrete|weblogo] [revcomp=no|yes] [scheme=nucl_simpa] [threshold_lines=yes|no]
-  
-  Any optional argument can be set as 'default', skipped parameters are also substituted as default (in example below icd_mode is default, and also scheme and threshold_lines): `pmflogo motif.pcm logo.png default 30 60 default yes`
+SequenceLogo consists of two tools:
 
-  Required arguments:
-    * input_file can be either in PCM format (file extension should be .pat or .pcm), or in FASTA format (file extensions: .mfa, .fasta, .plain), or in SMall BiSMark format (.xml), or in IUPAC format (any other extension).
-    * output_logo_filename is output logo file with format .png (extension should be included into name) which will be generated
-    
+    sequence_logo [options] \<input files\>...
+
+  *input_file* can be either in PCM format (file extension should be .pat or .pcm), or in FASTA format (file extensions: .mfa, .fasta, .plain), or in SMall BiSMark format (.xml), or in IUPAC format (any other extension). In future releases formats except PCM and PPM will be removed in preference of Unix-like modular style.
+
   Optional parameters:
-    * words_count [=default] is a float number that represents alignment weight. If words_count is set to 'default' - it'd be obtained from input (if it's PCM or IUPAC). In some cases (when PPM is used) words_count can't be obtained. In such a case discrete logo can't be drawn, and weblogo will be drawn instead.
-    * x_unit - width of a single letter
-    * y_unit - height of a letter
-    * icd_mode - information content mode
-    * revcomp - create logo for a direct or reverse-complement orientation
-    * scheme - nucleotide images folder name (by default only one scheme is used)
-    * threshold_lines - lines on levels: icd2of4, icdThc(=icd3of4), icdTlc, - relative to icd4of4
-  
-* Tool **generate_logo** generates two logos - direct and reverse-complement with some reasonable defaults for a single motif and puts a logo in a logo_folder
-  
-    generate_logo \<motif_filename\> [logo_folder = directory of input motif file]
 
-* Tool **generate_all_logos** generates two logos - direct and reverse-complement with some reasonable defaults for each motif in a folder and puts all logos in a logo_folder
+    * --x-unit SIZE - width of a single letter
+    * --y-unit SIZE - base height of a letter
+    * --words-count WEIGHT - float number that represents alignment weight. If words count not defined - it'd be obtained from input if input file is a PCM. If input file is a PPM words_count can't be obtained. In such a case discrete logo can't be drawn, and weblogo will be drawn instead.
+    * --icd-mode \<weblogo|discrete\> - information content mode
+    * --orientation \<direct|revcomp|both\> - create logo for a direct, reverse-complement or both orientations of motif
+    * --scheme FOLDER - name of folder containing nucleotide images
+    * --threshold-lines - draw lines on specific levels
 
-    generate_all_logos \<motifs_folder> \<logo_folder>
- 
- 
+* Tool **glue_logos** generates a single image of aligned motifs.
+
+    glue_logos <output file> <file with alignment infos>
+      or
+    \<alignment infos\> | glue_logos <output file>
+
+  Input data comes either from file with alignments or from stdin. *glue_logos* is designated to work fine with macroape *align_motifs* tool and has input format the same as output format of *align_motifs* tool:
+      pcm_file_1  shift_1  orientation_1
+      pcm_file_2  shift_2  orientation_2
+      pcm_file_3  shift_3  orientation_3
+
+  So it's simple to run `align_motifs --pcm leader.pcm other_motifs_1.pcm other_motifs_2.pcm | glue_logos cluster.png`
+  Don't forget to use PCM files instead of PWM files!
+
 ## Contributing
 
 1. Fork it
