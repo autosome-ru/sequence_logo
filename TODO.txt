@@ -1,2 +1,8 @@
 AssetsPath shouldn't be used at draw_logo level because it makes it impossible to change scheme on one folder that is outside the gem
 And how to make possible use schemes inside the assets path
+
+Make use of Tempfile in glue_logos.
+
+Make tests
+
+Wrap execs into methods
