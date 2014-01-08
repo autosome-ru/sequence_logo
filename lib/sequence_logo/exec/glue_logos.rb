@@ -40,10 +40,16 @@ begin
     raise ArgumentError, 'Specify alignment infos'
   end
 
+  revcomp = ARGV.delete('--revcomp')
+
   logos = {}
   logo_filenames = []
   alignment_infos.each do |line|
     filename, shift, orientation = line.strip.split("\t")
+    raise 'Unknown orientation'  unless %w[direct revcomp].include?(orientation.downcase)
+    if revcomp
+      orientation = (orientation == 'direct') ? 'revcomp' : 'direct'
+    end
     ppm = get_ppm_from_file(filename)
     checkerr("bad input file: #{filename}") { ppm == nil }
     shift = shift.to_i
