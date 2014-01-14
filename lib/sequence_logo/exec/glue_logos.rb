@@ -1,5 +1,42 @@
 require_relative '../../sequence_logo'
 require 'fileutils'
+require 'cgi'
+
+def generate_glued_logo(alignment_infos, options, total_orientation, output_file)
+  logos = {}
+  logo_filenames = []
+  rightmost_side = alignment_infos.map do |line|
+    filename, shift, orientation = line.strip.split("\t")
+    shift = shift.to_i
+    shift + get_ppm_from_file(filename).length
+  end.max
+
+  alignment_infos.each do |line|
+    filename, shift, orientation = line.strip.split("\t")
+    ppm = get_ppm_from_file(filename)
+    shift = shift.to_i
+    raise 'Unknown orientation'  unless %w[direct revcomp].include?(orientation.downcase)
+    if total_orientation == :revcomp
+      orientation = (orientation == 'direct') ? 'revcomp' : 'direct'
+      shift = rightmost_side - shift - ppm.length
+    end
+    checkerr("bad input file: #{filename}") { ppm == nil }
+    logo_filename = "#{filename}_temp.png"
+    logo_filenames << logo_filename
+    case orientation
+    when 'direct'
+      SequenceLogo.draw_logo(ppm, options).write(logo_filename)
+    when 'revcomp'
+      SequenceLogo.draw_logo(ppm.revcomp, options).write(logo_filename)
+    else
+      raise "Unknown orientation #{orientation} for #{filename}"
+    end
+    logos[logo_filename] = {shift: shift, length: ppm.length, name: CGI.unescape(File.basename(filename, File.extname(filename)))}
+  end
+
+  SequenceLogo.glue_files(logos, output_file, options)
+  logo_filenames.each{|filename| File.delete(filename) }
+end
 
 begin
   doc = <<-EOS
@@ -15,6 +52,7 @@ begin
   EOS
 
   argv = ARGV
+  total_orientation = :direct
   default_options = {x_unit: 30, y_unit: 60, words_count: nil, icd_mode: :discrete, threshold_lines: true, scheme: 'nucl_simpa', logo_shift: 300, text_size_pt: 24}
   cli = SequenceLogo::CLI.new(default_options)
   cli.instance_eval do
@@ -24,6 +62,11 @@ begin
     end
     parser.on_head('--text-size SIZE', 'Text size in points') do |v|
       options[:text_size] = v.to_f
+    end
+    parser.on_head('--orientation ORIENTATION', 'Which logo to draw: direct/revcomp/both') do |v|
+      v = v.to_sym
+      raise ArgumentError, 'Orientation can be either direct or revcomp or both'  unless [:direct, :revcomp, :both].include?(v)
+      total_orientation = v
     end
   end
   options = cli.parse_options!(argv)
@@ -40,34 +83,16 @@ begin
     raise ArgumentError, 'Specify alignment infos'
   end
 
-  revcomp = ARGV.delete('--revcomp')
-
-  logos = {}
-  logo_filenames = []
-  alignment_infos.each do |line|
-    filename, shift, orientation = line.strip.split("\t")
-    raise 'Unknown orientation'  unless %w[direct revcomp].include?(orientation.downcase)
-    if revcomp
-      orientation = (orientation == 'direct') ? 'revcomp' : 'direct'
-    end
-    ppm = get_ppm_from_file(filename)
-    checkerr("bad input file: #{filename}") { ppm == nil }
-    shift = shift.to_i
-    logo_filename = "#{filename}_temp.png"
-    logo_filenames << logo_filename
-    case orientation
-    when 'direct'
-      SequenceLogo.draw_logo(ppm, options).write(logo_filename)
-    when 'revcomp'
-      SequenceLogo.draw_logo(ppm.revcomp, options).write(logo_filename)
-    else
-      raise "Unknown orientation #{orientation} for #{filename}"
-    end
-    logos[logo_filename] = {shift: shift, length: ppm.length, name: File.basename(filename, File.extname(filename))}
+  if total_orientation == :both
+    extname = File.extname(output_file)
+    basename = File.basename(output_file, extname)
+    dirname = File.dirname(output_file)
+    generate_glued_logo(alignment_infos, options, :direct, File.join(dirname, "#{basename}_direct.#{extname}"))
+    generate_glued_logo(alignment_infos, options, :revcomp, File.join(dirname, "#{basename}_revcomp.#{extname}"))
+  else
+    generate_glued_logo(alignment_infos, options, total_orientation, output_file)
   end
 
-  SequenceLogo.glue_files(logos, output_file, options)
-  logo_filenames.each{|filename| File.delete(filename) }
 rescue => err
   $stderr.puts "\n#{err}\n#{err.backtrace.first(5).join("\n")}\n\nUse --help option for help\n\n#{doc}"
 end
