@@ -6,13 +6,14 @@ def generate_glued_logo(alignment_infos, options, total_orientation, output_file
   logos = {}
   logo_filenames = []
   rightmost_side = alignment_infos.map do |line|
-    filename, shift, orientation = line.strip.split("\t")
+    filename, shift, orientation, motif_name = line.strip.split("\t")
     shift = shift.to_i
     shift + get_ppm_from_file(filename).length
   end.max
 
   alignment_infos.each do |line|
-    filename, shift, orientation = line.strip.split("\t")
+    filename, shift, orientation, motif_name = line.strip.split("\t")
+    motif_name ||= CGI.unescape(File.basename(filename, File.extname(filename)))
     ppm = get_ppm_from_file(filename)
     shift = shift.to_i
     raise 'Unknown orientation'  unless %w[direct revcomp].include?(orientation.downcase)
@@ -29,9 +30,9 @@ def generate_glued_logo(alignment_infos, options, total_orientation, output_file
     when 'revcomp'
       SequenceLogo.draw_logo(ppm.revcomp, options).write(logo_filename)
     else
-      raise "Unknown orientation #{orientation} for #{filename}"
+      raise "Unknown orientation #{orientation} for #{motif_name}"
     end
-    logos[logo_filename] = {shift: shift, length: ppm.length, name: CGI.unescape(File.basename(filename, File.extname(filename)))}
+    logos[logo_filename] = {shift: shift, length: ppm.length, name: motif_name}
   end
 
   SequenceLogo.glue_files(logos, output_file, options)
@@ -45,10 +46,12 @@ begin
       or
     <alignment infos file> | glue_logos <output file>
 
-  Alignment infos has format:
-    pcm_file_1  shift_1  orientation_1
-    pcm_file_2  shift_2  orientation_2
-    pcm_file_3  shift_3  orientation_3
+  Alignment infos has the following format (tab separated)
+  if motif names not specified - filenames are used as labels:
+    pcm_file_1  shift_1  orientation_1  [motif_name_1]
+    pcm_file_2  shift_2  orientation_2  [motif_name_2]
+    pcm_file_3  shift_3  orientation_3  [motif_name_3]
+
   EOS
 
   argv = ARGV
