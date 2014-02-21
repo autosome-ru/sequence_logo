@@ -1,10 +1,11 @@
 require_relative '../../sequence_logo'
 require 'fileutils'
 require 'cgi'
+require 'tempfile'
 
 def generate_glued_logo(alignment_infos, options, total_orientation, output_file)
   logos = {}
-  logo_filenames = []
+  logo_files = []
   rightmost_side = alignment_infos.map do |line|
     filename, shift, orientation, motif_name = line.strip.split("\t")
     shift = shift.to_i
@@ -22,21 +23,21 @@ def generate_glued_logo(alignment_infos, options, total_orientation, output_file
       shift = rightmost_side - shift - ppm.length
     end
     checkerr("bad input file: #{filename}") { ppm == nil }
-    logo_filename = "#{filename}_temp.png"
-    logo_filenames << logo_filename
+    logo_file = Tempfile.new(filename)
+    logo_files << logo_file
     case orientation
     when 'direct'
-      SequenceLogo.draw_logo(ppm, options).write(logo_filename)
+      SequenceLogo.draw_logo(ppm, options).write("PNG:#{logo_file.path}")
     when 'revcomp'
-      SequenceLogo.draw_logo(ppm.revcomp, options).write(logo_filename)
+      SequenceLogo.draw_logo(ppm.revcomp, options).write("PNG:#{logo_file.path}")
     else
       raise "Unknown orientation #{orientation} for #{motif_name}"
     end
-    logos[logo_filename] = {shift: shift, length: ppm.length, name: motif_name}
+    logos[logo_file.path] = {shift: shift, length: ppm.length, name: motif_name}
   end
 
   SequenceLogo.glue_files(logos, output_file, options)
-  logo_filenames.each{|filename| File.delete(filename) }
+  logo_files.each(&:close)
 end
 
 begin
