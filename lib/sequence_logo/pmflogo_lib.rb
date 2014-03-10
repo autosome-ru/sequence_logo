@@ -39,6 +39,11 @@ module SequenceLogo
     i_logo
   end
 
+  def self.letter_image(images, letter, x_size, y_size)
+    letter_index = {'A' => 0, 'C' => 1, 'G' => 2, 'T' => 3}[letter.upcase]
+    images[letter_index].dup.resize(x_size, y_size)
+  end
+
   def self.letter_images(scheme_dir)
     if File.exist?(File.join(scheme_dir,'a.png'))
       extension = 'png'
@@ -52,22 +57,21 @@ module SequenceLogo
     Magick::ImageList.new(*letter_files)
   end
 
-  def self.draw_letters_on_canvas(i_logo, i_letters, ppm, options)
+  # Takes a matrix with letter heights and draws a logo with tall to short letters at each position
+  def self.draw_letters_on_canvas(i_logo, i_letters, matrix, options)
     y_unit = options[:y_unit]
     x_unit = options[:x_unit]
-    matrix = ppm.get_logo(options[:icd_mode])
-    matrix['A'].each_index { |i|
+    matrix['A'].each_index do |i|
+      position = ['A', 'C', 'G', 'T'].map{|letter| [letter, matrix[letter][i]] }
       y_pos = 0
-      sorted_letters = ['A', 'C', 'G', 'T'].collect { |letter| {:score => matrix[letter][i], :letter => letter} }.sort_by { |pair| pair[:score] }.collect { |pair| pair[:letter] }.reverse
-      sorted_letters.each { |letter|
-        next if y_unit * matrix[letter][i] <= 1
-        letter_index = {'A' => 0, 'C' => 1, 'G' => 2, 'T' => 3}[letter]
+      position.sort_by{|letter, count| count }.reverse.each do |letter, count|
+        next  if y_unit * count <= 1
         y_block = (y_unit * matrix[letter][i]).round
-        i_logo << i_letters[letter_index].dup.resize(x_unit, y_block)
         y_pos += y_block
+        i_logo << letter_image(i_letters, letter, x_unit, y_block)
         i_logo.cur_image.page = Magick::Rectangle.new(0, 0, i * x_unit, y_unit - y_pos )
-      }
-    }
+      end
+    end
   end
 
   def self.draw_logo(ppm, options = {})
@@ -78,7 +82,7 @@ module SequenceLogo
     end
     i_logo = create_canvas(ppm, options)
     scheme_dir = File.join(AssetsPath, options[:scheme])
-    draw_letters_on_canvas(i_logo, letter_images(scheme_dir), ppm, options)
+    draw_letters_on_canvas(i_logo, letter_images(scheme_dir), ppm.get_logo(options[:icd_mode]), options)
     i_logo = i_logo.flatten_images
   end
 
