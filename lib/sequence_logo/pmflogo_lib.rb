@@ -39,8 +39,7 @@ module SequenceLogo
     i_logo
   end
 
-  def self.letter_image(images, letter, x_size, y_size)
-    letter_index = {'A' => 0, 'C' => 1, 'G' => 2, 'T' => 3}[letter.upcase]
+  def self.letter_image(images, letter_index, x_size, y_size)
     images[letter_index].dup.resize(x_size, y_size)
   end
 
@@ -61,14 +60,13 @@ module SequenceLogo
   def self.draw_letters_on_canvas(i_logo, i_letters, matrix, options)
     y_unit = options[:y_unit]
     x_unit = options[:x_unit]
-    matrix['A'].each_index do |i|
-      position = ['A', 'C', 'G', 'T'].map{|letter| [letter, matrix[letter][i]] }
+    matrix.each_with_index do |position, i|
       y_pos = 0
-      position.sort_by{|letter, count| count }.reverse.each do |letter, count|
+      position.each_with_index.sort_by{|count, letter_index| count }.reverse_each do |count, letter_index|
         next  if y_unit * count <= 1
-        y_block = (y_unit * matrix[letter][i]).round
+        y_block = (y_unit * count).round
         y_pos += y_block
-        i_logo << letter_image(i_letters, letter, x_unit, y_block)
+        i_logo << letter_image(i_letters, letter_index, x_unit, y_block)
         i_logo.cur_image.page = Magick::Rectangle.new(0, 0, i * x_unit, y_unit - y_pos )
       end
     end

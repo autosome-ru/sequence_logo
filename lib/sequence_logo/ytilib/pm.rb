@@ -9,6 +9,14 @@ module Ytilib
     def each_position_index(&block)
       @matrix['A'].each_index(&block)
     end
+
+    def each_position(&block)
+      return enum_for(:each_position)  unless block_given?
+      @matrix['A'].each_index do |i|
+        position =  ['A', 'C', 'G', 'T'].map{|letter| @matrix[letter][i] }
+        yield position
+      end
+    end
     
     def score_mean(bckgr = Randoom::DEF_PROBS)
       (0...@size).inject(0.0) { |mean, i| mean += ['A','C','G','T'].inject(0.0) { |sum,l| sum += @matrix[l][i] * bckgr[l] } }

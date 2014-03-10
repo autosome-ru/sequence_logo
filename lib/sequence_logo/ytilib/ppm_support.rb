@@ -43,35 +43,25 @@ class PPM
 
 
   def get_logo_weblogo
-    rseq = each_position_index.map do |i|
-      2 + ['A','C','G','T'].map{|l| el = @matrix[l][i]; (el == 0) ? 0 : el * Math.log2(el) }.inject(0, :+)
-    end
-    
-    mat = {'A'=>[], 'C'=>[], 'G'=>[], 'T'=>[]}
-    each_position_index do |i|
-      ['A','C','G','T'].each { |l|
-        mat[l][i]= @matrix[l][i] * rseq[i] / 2 # so we can handle a '2 bit' scale here
-      }
-    end
-    
-    mat
+    rseq = each_position.map {|position|
+      position.map{|el| (el == 0) ? 0 : el * Math.log2(el) }.inject(0, :+) + 2
+    }
+
+    each_position.with_index.map {|position, ind|
+      position.map{|el| el * rseq[ind] / 2 }
+    }
   end
 
   def get_logo_discrete
     checkerr("words count is undefined") { !words_count }
     
-    rseq = each_position_index.map do |i|
+    rseq = each_position_index.map {|i|
       (icd4of4 == 0) ? 1.0 : get_line(infocod(i))
-    end
-    
-    mat = {'A'=>[], 'C'=>[], 'G'=>[], 'T'=>[]}
-    each_position_index do |i|
-      ['A','C','G','T'].each { |l| 
-        mat[l][i] = @matrix[l][i] * rseq[i]
-      }
-    end
-    
-    mat
+    }
+
+    each_position.with_index.map {|position, ind|
+      position.map{|el| el * rseq[ind] }
+    }
   end
   
   def revcomp
