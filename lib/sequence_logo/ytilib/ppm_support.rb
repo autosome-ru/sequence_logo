@@ -43,20 +43,16 @@ class PPM
 
 
   def get_logo_weblogo
-    rseq = []
-    @matrix['A'].each_index { |i|
-      rseq << 2 + ['A','C','G','T'].inject(0) { |sum, l|
-        pn = @matrix[l][i]
-        sum += (pn == 0) ? 0 : pn * Math.log(pn) / Math.log(2)
-      }
-    }
+    rseq = each_position_index.map do |i|
+      2 + ['A','C','G','T'].map{|l| el = @matrix[l][i]; (el == 0) ? 0 : el * Math.log2(el) }.inject(0, :+)
+    end
     
     mat = {'A'=>[], 'C'=>[], 'G'=>[], 'T'=>[]}
-    @matrix['A'].each_index { |i|
+    each_position_index do |i|
       ['A','C','G','T'].each { |l|
         mat[l][i]= @matrix[l][i] * rseq[i] / 2 # so we can handle a '2 bit' scale here
       }
-    }
+    end
     
     mat
   end
@@ -64,17 +60,16 @@ class PPM
   def get_logo_discrete
     checkerr("words count is undefined") { !words_count }
     
-    rseq = []
-    @matrix['A'].each_index { |i|
-      rseq << (icd4of4 == 0 ? 1.0 : ( (infocod(i) - icd4of4) / icd4of4 ).abs)
-    }
+    rseq = each_position_index.map do |i|
+      (icd4of4 == 0) ? 1.0 : get_line(infocod(i))
+    end
     
     mat = {'A'=>[], 'C'=>[], 'G'=>[], 'T'=>[]}
-    @matrix['A'].each_index { |i|
+    each_position_index do |i|
       ['A','C','G','T'].each { |l| 
         mat[l][i] = @matrix[l][i] * rseq[i]
       }
-    }
+    end
     
     mat
   end

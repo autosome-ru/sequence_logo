@@ -5,6 +5,10 @@ module Ytilib
     attr_accessor :words_count
     
     alias length size
+
+    def each_position_index(&block)
+      @matrix['A'].each_index(&block)
+    end
     
     def score_mean(bckgr = Randoom::DEF_PROBS)
       (0...@size).inject(0.0) { |mean, i| mean += ['A','C','G','T'].inject(0.0) { |sum,l| sum += @matrix[l][i] * bckgr[l] } }
@@ -324,12 +328,12 @@ module Ytilib
       attributes = {"length" => @size}
       attributes["words-count"] = @words_count if @words_count && @words_count > 0
       pe = b.add_element( pwm ? "PWM" : "PCM", attributes )
-      (0...@matrix['A'].size).each { |i|
+      each_position_index do |i|
         pm_c = pe.add_element("pm-column", {"position" => i+1})
         ['A', 'C', 'G', 'T'].each { |l|
           pm_c.add_element(l.downcase).add_text(@matrix[l][i].to_s)
         }
-      }
+      end
     end
     
     def PM.from_bismark(b, iupacomp = false)
