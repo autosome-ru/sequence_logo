@@ -25,7 +25,8 @@ module SequenceLogo
     def draw_logo(logo_matrix)
       logo_matrix.each_with_index do |position, i|
         y_pos = 0
-        position.each_with_index.sort_by{|count, letter_index| count }.reverse_each do |count, letter_index|
+        # sort by [count, letter_index] allows us to make stable sort (it's useful for predictable order of same-height nucleotides)
+        position.each_with_index.sort_by{|count, letter_index| [count, letter_index] }.reverse_each do |count, letter_index|
           next  if y_unit * count <= 1
           y_block = (y_unit * count).round
           y_pos += y_block
@@ -74,7 +75,7 @@ module SequenceLogo
     Magick::ImageList.new(*letter_files)
   end
 
-  def self.draw_logo(ppm, options = {})
+  def self.draw_ppm_logo(ppm, options = {})
     ppm.words_count = options[:words_count]  if options[:words_count]
     unless ppm.words_count
       report "words count for PPM is undefined, assuming weblogo mode"
@@ -98,6 +99,42 @@ module SequenceLogo
     canvas.draw_logo( ppm.get_logo(options[:icd_mode]) )
     canvas.logo
   end
+
+  def self.draw_sequence_logo(sequence, options = {})
+    logo = logo_by_sequence(sequence)
+    scheme_dir = File.join(AssetsPath, options[:scheme])
+    letter_images = letter_images(scheme_dir)
+    canvas = LogoCanvas.new(sequence.length, letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit])
+    canvas.background(Magick::HatchFill.new('white', 'white'))
+    canvas.draw_logo(logo)
+    canvas.logo
+  end
+
+  def self.draw_sequence_w_snp_logo(sequence_w_snp, options = {})
+    logo = logo_by_sequence_w_snp(sequence_w_snp)
+    scheme_dir = File.join(AssetsPath, options[:scheme])
+    letter_images = letter_images(scheme_dir)
+    canvas = LogoCanvas.new(logo.length, letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit])
+    canvas.background(Magick::HatchFill.new('white', 'white'))
+    canvas.draw_logo(logo)
+    canvas.logo
+  end
+
+  def self.logo_by_sequence(sequence)
+    sequence.each_char.map{|letter| {'A' => 0 ,'C' => 1,'G' => 2 ,'T' => 3}[letter.upcase] }.map{|letter_index| 4.times.map{|i| i == letter_index ? 1.0 : 0.0 }}
+  end
+
+  def self.logo_of_snp_position(allele_variants)
+    allele_variants = allele_variants.map(&:upcase)
+    ['A','C','G','T'].map{|letter| allele_variants.include?(letter) ? (1.0 / allele_variants.size) : 0.0 }
+  end
+
+  def self.logo_by_sequence_w_snp(sequence_w_snp)
+    left, mid, right = sequence_w_snp.split(/[\[\]]/)
+    logo_by_sequence(left) + [ logo_of_snp_position(mid.split('/')) ] + logo_by_sequence(right)
+    # sequence.each_char.map{|letter| {'A' => 0 ,'C' => 1,'G' => 2 ,'T' => 3}[letter.upcase] }.map{|letter_index| 4.times.map{|i| i == letter_index ? 1.0 : 0.0 }}
+  end
+
 
   # logos = { filename => {shift: ..., length: ..., name: ...} }
   def self.glue_files(logos, output_file, options)

@@ -27,9 +27,9 @@ def generate_glued_logo(alignment_infos, options, total_orientation, output_file
     logo_files << logo_file
     case orientation
     when 'direct'
-      SequenceLogo.draw_logo(ppm, options).write("PNG:#{logo_file.path}")
+      SequenceLogo.draw_ppm_logo(ppm, options).write("PNG:#{logo_file.path}")
     when 'revcomp'
-      SequenceLogo.draw_logo(ppm.revcomp, options).write("PNG:#{logo_file.path}")
+      SequenceLogo.draw_ppm_logo(ppm.revcomp, options).write("PNG:#{logo_file.path}")
     else
       raise "Unknown orientation #{orientation} for #{motif_name}"
     end

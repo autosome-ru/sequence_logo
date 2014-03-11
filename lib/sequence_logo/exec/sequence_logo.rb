@@ -23,28 +23,46 @@ begin
       raise ArgumentError, 'Orientation can be either direct or revcomp or both'  unless [:direct, :revcomp, :both].include?(v)
       options[:orientation] = v
     end
+
+    parser.on('--snp-sequence SEQUENCE', 'Specify sequence with SNP (like ATCTC[C/G]CCTAAT) instead of motif') do |v|
+      options[:sequence_w_snp] = v
+    end
+    parser.on('--sequence SEQUENCE', 'Specify sequence (like ATCTCGCCTAAT) instead of motif') do |v|
+      options[:sequence] = v
+    end
   end
   options = cli.parse_options!(argv)
 
   logo_folder = options[:logo_folder]
   Dir.mkdir(logo_folder)  unless Dir.exist?(logo_folder)
 
+  if options[:sequence]
+    sequence = options[:sequence]
+    output_filename = File.join(logo_folder, "#{sequence}.png")
+    SequenceLogo.draw_sequence_logo(sequence, options).write(output_filename)
+  elsif options[:sequence_w_snp]
+    sequence_w_snp = options[:sequence_w_snp]
+    output_filename = File.join(logo_folder, sequence_w_snp.gsub(/[\[\]\/]/, '_') + ".png")
+    SequenceLogo.draw_sequence_w_snp_logo(sequence_w_snp, options).write(output_filename)
+  end
+
   filenames = argv
   filenames += $stdin.read.shellsplit  unless $stdin.tty?
-  raise ArgumentError, 'Specify at least one motif file'  if filenames.empty?
+  raise ArgumentError, 'Specify at least one motif file'  if filenames.empty? && !options[:sequence] && !options[:sequence_w_snp]
 
   filenames.each do |filename|
     ppm = get_ppm_from_file(filename)
+
     checkerr("bad input file: #{filename}") { ppm == nil }
 
     filename_wo_ext = File.basename(filename, File.extname(filename))
     if [:direct, :both].include?(options[:orientation])
       direct_output = File.join(logo_folder, "#{filename_wo_ext}_direct.png")
-      SequenceLogo.draw_logo(ppm, options).write(direct_output)
+      SequenceLogo.draw_ppm_logo(ppm, options).write(direct_output)
     end
     if [:revcomp, :both].include?(options[:orientation])
       revcomp_output = File.join(logo_folder, "#{filename_wo_ext}_revcomp.png")
-      SequenceLogo.draw_logo(ppm.revcomp, options).write(revcomp_output)
+      SequenceLogo.draw_ppm_logo(ppm.revcomp, options).write(revcomp_output)
     end
   end
 rescue => err
