@@ -71,34 +71,4 @@ module SequenceLogo
   def self.logo_matrix_by_sequence(sequence)
     sequence.each_char.map{|letter| letter_index(letter) }.map{|letter_index| 4.times.map{|i| i == letter_index ? 1.0 : 0.0 }}
   end
-
-  # logos = { filename => {shift: ..., length: ..., name: ...} }
-  def self.glue_files(logos, output_file, options)
-    logo_shift = options[:logo_shift] || 300
-    x_unit = options[:x_unit] || 30
-    y_unit = options[:y_unit] || 60
-    text_size = options[:text_size] || 24
-
-    leftmost_shift = logos.map{|file,infos| infos[:shift] }.min
-    logos.each{|file, infos| infos[:shift] -= leftmost_shift}
-    full_alignment_size = logos.map{|file,infos| infos[:length] + infos[:shift] }.max
-
-    x_size = logo_shift + full_alignment_size * x_unit
-    y_size = logos.size * y_unit
-    command_string = "convert -size #{ x_size }x#{ y_size } -pointsize #{text_size} xc:white "
-    logos.each_with_index do |(logo_filename,infos), idx|
-      logo_x_start = logo_shift + infos[:shift] * x_unit
-      logo_y_start = y_unit * idx
-      command_string << "\"#{ logo_filename }\" -geometry +#{ logo_x_start }+#{ logo_y_start } -composite "
-    end
-
-    command_draw_names = ""
-    logos.each_with_index do |(logo_filename,infos), idx|
-      text_x_start = 10
-      text_y_start = y_unit * (idx + 0.5)
-      command_draw_names << "-draw \"text #{ text_x_start },#{ text_y_start } '#{infos[:name]}'\" "
-    end
-
-    system(command_string + command_draw_names + "\"#{output_file}\"")
-  end
 end

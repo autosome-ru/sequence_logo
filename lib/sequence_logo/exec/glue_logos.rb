@@ -3,40 +3,68 @@ require 'fileutils'
 require 'cgi'
 require 'tempfile'
 
+# logos = { filename => {shift: ..., length: ..., name: ...} }
+def glue_files(logos, output_file, options)
+  logo_shift = options[:logo_shift] || 300
+  x_unit = options[:x_unit] || 30
+  y_unit = options[:y_unit] || 60
+  text_size = options[:text_size] || 24
+
+  leftmost_shift = logos.map{|file,infos| infos[:shift] }.min
+  logos.each{|file, infos| infos[:shift] -= leftmost_shift}
+  full_alignment_size = logos.map{|file,infos| infos[:length] + infos[:shift] }.max
+
+  x_size = logo_shift + full_alignment_size * x_unit
+  y_size = logos.size * y_unit
+
+  command_string = "convert -size #{ x_size }x#{ y_size } -pointsize #{text_size} xc:white "
+
+  logos.each_with_index do |(logo_filename,infos), idx|
+    logo_x_start = logo_shift + infos[:shift] * x_unit
+    logo_y_start = y_unit * idx
+    command_string << "\"#{ logo_filename }\" -geometry +#{ logo_x_start }+#{ logo_y_start } -composite "
+  end
+
+  command_draw_names = ""
+  logos.each_with_index do |(logo_filename,infos), idx|
+    text_x_start = 10
+    text_y_start = y_unit * (idx + 0.5)
+    command_draw_names << "-draw \"text #{ text_x_start },#{ text_y_start } '#{infos[:name]}'\" "
+  end
+
+  system(command_string + command_draw_names + "\"#{output_file}\"")
+end
+
+def rightmost_position(alignment_infos)
+  alignment_infos.map{|filename, shift, orientation, motif_name, ppm|  shift + ppm.length  }.max
+end
+
+def alignment_on_reverse_strand(alignment_infos)
+  rightmost_position = rightmost_position(alignment_infos)
+  alignment_infos.map{ |filename, shift, orientation, motif_name, ppm|
+    shift_reversed = rightmost_position - shift - ppm.length
+    orientation_reversed = (orientation == 'direct') ? 'revcomp' : 'direct'
+
+    [filename, shift_reversed, orientation_reversed, motif_name, ppm] # don't revcomp PPM
+  }
+end
+
 def generate_glued_logo(alignment_infos, options, total_orientation, output_file)
   logos = {}
   logo_files = []
-  rightmost_side = alignment_infos.map do |line|
-    filename, shift, orientation, motif_name = line.strip.split("\t")
-    shift = shift.to_i
-    shift + get_ppm_from_file(filename).length
-  end.max
+  if total_orientation == :revcomp
+    return generate_glued_logo(alignment_on_reverse_strand(alignment_infos), options, :direct, output_file)
+  end
 
-  alignment_infos.each do |line|
-    filename, shift, orientation, motif_name = line.strip.split("\t")
+  alignment_infos.each_with_index do |(filename, shift, orientation, motif_name, ppm), index|
     motif_name ||= CGI.unescape(File.basename(filename, File.extname(filename)))
-    ppm = get_ppm_from_file(filename)
-    shift = shift.to_i
-    raise 'Unknown orientation'  unless %w[direct revcomp].include?(orientation.downcase)
-    if total_orientation == :revcomp
-      orientation = (orientation == 'direct') ? 'revcomp' : 'direct'
-      shift = rightmost_side - shift - ppm.length
-    end
-    checkerr("bad input file: #{filename}") { ppm == nil }
-    logo_file = Tempfile.new(filename)
+    logo_file = Tempfile.new("#{index}_#{File.basename(filename)}")
     logo_files << logo_file
-    case orientation
-    when 'direct'
-      SequenceLogo.draw_ppm_logo(ppm, options).write("PNG:#{logo_file.path}")
-    when 'revcomp'
-      SequenceLogo.draw_ppm_logo(ppm.revcomp, options).write("PNG:#{logo_file.path}")
-    else
-      raise "Unknown orientation #{orientation} for #{motif_name}"
-    end
+    SequenceLogo.draw_ppm_logo((orientation.to_s.downcase == 'direct') ? ppm : ppm.revcomp, options).write("PNG:#{logo_file.path}")
     logos[logo_file.path] = {shift: shift, length: ppm.length, name: motif_name}
   end
 
-  SequenceLogo.glue_files(logos, output_file, options)
+  glue_files(logos, output_file, options)
   logo_files.each(&:close)
 end
 
@@ -57,6 +85,7 @@ begin
 
   argv = ARGV
   total_orientation = :direct
+  # ToDo: should threshold_lines be true here?
   default_options = {x_unit: 30, y_unit: 60, words_count: nil, icd_mode: :discrete, threshold_lines: true, scheme: 'nucl_simpa', logo_shift: 300, text_size_pt: 24}
   cli = SequenceLogo::CLI.new(default_options)
   cli.instance_eval do
@@ -87,12 +116,24 @@ begin
     raise ArgumentError, 'Specify alignment infos'
   end
 
+  alignment_infos = alignment_infos.map{|line|
+    filename, shift, orientation, motif_name = line.strip.split("\t")
+    motif_name ||= CGI.unescape(File.basename(filename, File.extname(filename)))
+    ppm = get_ppm_from_file(filename)
+    shift = shift.to_i
+
+    checkerr("bad input file: #{filename}") { ppm == nil }
+    raise 'Unknown orientation'  unless %w[direct revcomp].include?(orientation.downcase)
+
+    [filename, shift, orientation, motif_name, ppm]
+  }
+
   if total_orientation == :both
     extname = File.extname(output_file)
     basename = File.basename(output_file, extname)
     dirname = File.dirname(output_file)
-    generate_glued_logo(alignment_infos, options, :direct, File.join(dirname, "#{basename}_direct.#{extname}"))
-    generate_glued_logo(alignment_infos, options, :revcomp, File.join(dirname, "#{basename}_revcomp.#{extname}"))
+    generate_glued_logo(alignment_infos, options, :direct, File.join(dirname, "#{basename}_direct#{extname}"))
+    generate_glued_logo(alignment_infos, options, :revcomp, File.join(dirname, "#{basename}_revcomp#{extname}"))
   else
     generate_glued_logo(alignment_infos, options, total_orientation, output_file)
   end
