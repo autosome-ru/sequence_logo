@@ -21,18 +21,26 @@ module SequenceLogo
       i_logo.new_image(x_size, y_size, bg)
     end
 
-    # Takes a matrix with letter heights and draws a logo with tall to short letters at each position
+    # Takes an array with letter heights and draws a logo position with tall to short letters at each position
+    def draw_letters_for_positon(position)
+      position_logo = Magick::ImageList.new
+      position_logo.new_image(x_unit, y_unit){ self.background_color = 'transparent' }
+      y_pos = 0
+      # sort by [count, letter_index] allows us to make stable sort (it's useful for predictable order of same-height nucleotides)
+      position.each_with_index.sort_by{|count, letter_index| [count, letter_index] }.reverse_each do |count, letter_index|
+        next  if y_unit * count <= 1
+        y_block = (y_unit * count).round
+        y_pos += y_block
+        position_logo << letter_image(letter_index, x_unit, y_block)
+        position_logo.cur_image.page = Magick::Rectangle.new(0, 0, 0, y_unit - y_pos)
+      end
+      position_logo
+    end
+
     def draw_logo(logo_matrix)
       logo_matrix.each_with_index do |position, i|
-        y_pos = 0
-        # sort by [count, letter_index] allows us to make stable sort (it's useful for predictable order of same-height nucleotides)
-        position.each_with_index.sort_by{|count, letter_index| [count, letter_index] }.reverse_each do |count, letter_index|
-          next  if y_unit * count <= 1
-          y_block = (y_unit * count).round
-          y_pos += y_block
-          @i_logo << letter_image(letter_index, x_unit, y_block)
-          @i_logo.cur_image.page = Magick::Rectangle.new(0, 0, i * x_unit, y_unit - y_pos)
-        end
+        @i_logo << draw_letters_for_positon(position).flatten_images
+        @i_logo.cur_image.page = Magick::Rectangle.new(0, 0, i * x_unit, 0)
       end
     end
 
