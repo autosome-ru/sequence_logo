@@ -16,7 +16,6 @@ module SequenceLogo
       @i_logo = Magick::ImageList.new
       @i_logo.new_image(x_size, y_size){ self.background_color = 'transparent' }
       @shift = 0
-      yield self  if block_given?
     end
 
     def background(fill)

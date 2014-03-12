@@ -24,7 +24,7 @@ module SequenceLogo
 
     scheme_dir = File.join(AssetsPath, options[:scheme])
     letter_images = letter_images(scheme_dir)
-    LogoCanvas.new(ppm.length, letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit]) do |canvas|
+    LogoCanvas.new(ppm.length, letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit]).tap do |canvas|
       if options[:icd_mode] == :discrete
         canvas.background(Magick::HatchFill.new('white', 'white'))
         if options[:threshold_lines]
@@ -42,7 +42,7 @@ module SequenceLogo
   def self.draw_sequence_logo(sequence, options = {})
     scheme_dir = File.join(AssetsPath, options[:scheme])
     letter_images = letter_images(scheme_dir)
-    LogoCanvas.new(sequence.length, letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit]) do |canvas|
+    LogoCanvas.new(sequence.length, letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit]).tap do |canvas|
       canvas.background(Magick::HatchFill.new('white', 'white'))
       canvas.draw_logo( logo_matrix_by_sequence(sequence) )
     end.logo
@@ -55,7 +55,7 @@ module SequenceLogo
 
     scheme_dir = File.join(AssetsPath, options[:scheme])
     letter_images = letter_images(scheme_dir)
-    LogoCanvas.new(left.length + 1 + right.length, letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit]) do |canvas|
+    LogoCanvas.new(left.length + 1 + right.length, letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit]).tap do |canvas|
       canvas.background(Magick::HatchFill.new('white', 'white'))
 
       logo_matrix_by_sequence(left).each{|position|  canvas.logo_for_positon(position)  }
