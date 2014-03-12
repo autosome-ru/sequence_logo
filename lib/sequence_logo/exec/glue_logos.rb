@@ -3,36 +3,129 @@ require 'fileutils'
 require 'cgi'
 require 'tempfile'
 
+
+class GlueLogos
+  # named logo image with shist
+  class Logo
+    attr_accessor :logo, :shift, :name
+    def initialize(logo, shift, name)
+      @logo, @shift, @name = logo, shift, name
+    end
+    def width
+      logo.columns
+    end
+    def shifted_by(shift_by)
+      Logo.new(logo, shift + shift_by, name)
+    end
+  end
+
+  # list of named logos with shifts and operations to normalize them
+  class List
+    def initialize(logos = [])
+      @logos = logos
+    end
+
+    def add_logo(logo, shift, name)
+      @logos << Logo.new(logo, shift, name)
+    end
+
+    def leftmost_shift
+      @logos.map(&:shift).min
+    end
+
+    def logos
+      shift = leftmost_shift
+      @logos.map{|logo| logo.shifted_by(-shift) }
+    end
+
+    # imput is a hash: {filename => {name: , shift: }}
+    def self.new_from_hash(logos_hash)
+      logos_list = GlueLogos::List.new
+      logos_hash.each do |filename, infos|
+        logos_list.add_logo(Magick::Image.read(filename)[0], infos[:shift], infos[:name])
+      end
+      logos_list
+    end
+  end
+
+  class Canvas
+    attr_reader :x_unit, :y_unit, :text_size, :logo_shift, :i_logo
+    def initialize(options = {})
+      @logo_shift = options[:logo_shift] || 300
+      @x_unit = options[:x_unit] || 30
+      @y_unit = options[:y_unit] || 60
+      @text_size = options[:text_size] || 24
+
+      @i_logo = Magick::ImageList.new
+      @index = 0
+    end
+
+    def text_image(text)
+      text_img = Magick::Image.new(logo_shift, y_unit){ self.background_color = 'transparent' }
+      annotation = Magick::Draw.new
+      annotation.pointsize(text_size)
+      annotation.text(10, y_unit / 2, text)
+      annotation.draw(text_img)
+      text_img
+    end
+
+    def logo_with_name(image, name)
+      named_logo = Magick::ImageList.new
+      named_logo.new_image(logo_shift + image.columns, y_unit){ self.background_color = 'transparent' }
+      
+      named_logo << text_image(name)
+      named_logo.cur_image.page = Magick::Rectangle.new(0, 0, 0, 0)
+      
+      named_logo << image
+      named_logo.cur_image.page = Magick::Rectangle.new(0, 0, logo_shift, 0)
+      
+      named_logo.flatten_images
+    end
+
+    def shifted_logo(image, shift)
+      shifted_logo = Magick::ImageList.new
+      shifted_logo.new_image(shift * x_unit + image.columns, y_unit){ self.background_color = 'transparent' }
+      
+      shifted_logo << image
+      shifted_logo.cur_image.page = Magick::Rectangle.new(0, 0, shift * x_unit, 0)
+      
+      shifted_logo.flatten_images
+    end
+
+    def render_logo(logo)
+      @i_logo << logo_with_name(shifted_logo(logo.logo, logo.shift), logo.name)
+      @i_logo.cur_image.page = Magick::Rectangle.new(0, 0, 0, @index * y_unit)
+      @index += 1
+    end
+
+    def x_size
+      @i_logo.to_a.map(&:columns).max
+    end
+
+    def y_size
+      @i_logo.to_a.map(&:rows).inject(0, :+)
+    end
+    
+    def background(fill)
+      @i_logo.unshift Magick::Image.new(x_size, y_size, fill)
+    end
+
+    def image
+      @i_logo.unshift( Magick::Image.new(x_size, y_size){ self.background_color = 'transparent'} )
+      @i_logo.flatten_images
+    end
+  end
+end
+
 # logos = { filename => {shift: ..., length: ..., name: ...} }
 def glue_files(logos, output_file, options)
-  logo_shift = options[:logo_shift] || 300
-  x_unit = options[:x_unit] || 30
-  y_unit = options[:y_unit] || 60
-  text_size = options[:text_size] || 24
-
-  leftmost_shift = logos.map{|file,infos| infos[:shift] }.min
-  logos.each{|file, infos| infos[:shift] -= leftmost_shift}
-  full_alignment_size = logos.map{|file,infos| infos[:length] + infos[:shift] }.max
-
-  x_size = logo_shift + full_alignment_size * x_unit
-  y_size = logos.size * y_unit
-
-  command_string = "convert -size #{ x_size }x#{ y_size } -pointsize #{text_size} xc:white "
-
-  logos.each_with_index do |(logo_filename,infos), idx|
-    logo_x_start = logo_shift + infos[:shift] * x_unit
-    logo_y_start = y_unit * idx
-    command_string << "\"#{ logo_filename }\" -geometry +#{ logo_x_start }+#{ logo_y_start } -composite "
+  logos_list = GlueLogos::List.new_from_hash(logos)
+  
+  canvas = GlueLogos::Canvas.new(options)
+  logos_list.logos.each do |logo|
+    canvas.render_logo(logo)
   end
-
-  command_draw_names = ""
-  logos.each_with_index do |(logo_filename,infos), idx|
-    text_x_start = 10
-    text_y_start = y_unit * (idx + 0.5)
-    command_draw_names << "-draw \"text #{ text_x_start },#{ text_y_start } '#{infos[:name]}'\" "
-  end
-
-  system(command_string + command_draw_names + "\"#{output_file}\"")
+  canvas.image.write('PNG:' + output_file)
 end
 
 def rightmost_position(alignment_infos)
