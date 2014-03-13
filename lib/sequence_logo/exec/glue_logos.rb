@@ -7,15 +7,15 @@ require 'tempfile'
 class GlueLogos
   # named logo image with shist
   class Logo
-    attr_accessor :logo, :shift, :name
-    def initialize(logo, shift, name)
-      @logo, @shift, @name = logo, shift, name
+    attr_accessor :image, :shift, :name
+    def initialize(image, shift, name)
+      @image, @shift, @name = image, shift, name
     end
     def width
-      logo.columns
+      image.columns
     end
     def shifted_by(shift_by)
-      Logo.new(logo, shift + shift_by, name)
+      Logo.new(image, shift + shift_by, name)
     end
   end
 
@@ -25,8 +25,8 @@ class GlueLogos
       @logos = logos
     end
 
-    def add_logo(logo, shift, name)
-      @logos << Logo.new(logo, shift, name)
+    def add_logo(image, shift, name)
+      @logos << Logo.new(image, shift, name)
     end
 
     def leftmost_shift
@@ -60,6 +60,17 @@ class GlueLogos
       @index = 0
     end
 
+    def put_image_at(image_list, image, x, y)
+      image_list << image
+      image_list.cur_image.page = Magick::Rectangle.new(0, 0, x, y)
+    end
+
+    # add transparent layer so that full canvas size can't be less than given size
+    def set_minimal_size(image_list, x_size, y_size)
+      empty_image = Magick::Image.new(x_size, y_size){ self.background_color = 'transparent'}
+      image_list.unshift(empty_image)
+    end
+
     def text_image(text)
       text_img = Magick::Image.new(logo_shift, y_unit){ self.background_color = 'transparent' }
       annotation = Magick::Draw.new
@@ -71,30 +82,21 @@ class GlueLogos
 
     def logo_with_name(image, name)
       named_logo = Magick::ImageList.new
-      named_logo.new_image(logo_shift + image.columns, y_unit){ self.background_color = 'transparent' }
-      
-      named_logo << text_image(name)
-      named_logo.cur_image.page = Magick::Rectangle.new(0, 0, 0, 0)
-      
-      named_logo << image
-      named_logo.cur_image.page = Magick::Rectangle.new(0, 0, logo_shift, 0)
-      
+      set_minimal_size(named_logo, logo_shift + image.columns, y_unit)
+      put_image_at(named_logo, text_image(name), 0, 0)
+      put_image_at(named_logo, image, logo_shift, 0)
       named_logo.flatten_images
     end
 
     def shifted_logo(image, shift)
       shifted_logo = Magick::ImageList.new
-      shifted_logo.new_image(shift * x_unit + image.columns, y_unit){ self.background_color = 'transparent' }
-      
-      shifted_logo << image
-      shifted_logo.cur_image.page = Magick::Rectangle.new(0, 0, shift * x_unit, 0)
-      
+      set_minimal_size(shifted_logo, shift * x_unit + image.columns, y_unit)
+      put_image_at(shifted_logo, image, shift * x_unit, 0)
       shifted_logo.flatten_images
     end
 
     def render_logo(logo)
-      @i_logo << logo_with_name(shifted_logo(logo.logo, logo.shift), logo.name)
-      @i_logo.cur_image.page = Magick::Rectangle.new(0, 0, 0, @index * y_unit)
+      put_image_at(@i_logo, logo_with_name(shifted_logo(logo.image, logo.shift), logo.name), 0, @index * y_unit)
       @index += 1
     end
 
@@ -111,7 +113,7 @@ class GlueLogos
     end
 
     def image
-      @i_logo.unshift( Magick::Image.new(x_size, y_size){ self.background_color = 'transparent'} )
+      set_minimal_size(@i_logo, x_size, y_size)
       @i_logo.flatten_images
     end
   end
@@ -126,6 +128,13 @@ def glue_files(logos, output_file, options)
     canvas.render_logo(logo)
   end
   canvas.image.write('PNG:' + output_file)
+end
+
+
+class Alignment
+  def initialize
+
+  end
 end
 
 def rightmost_position(alignment_infos)
