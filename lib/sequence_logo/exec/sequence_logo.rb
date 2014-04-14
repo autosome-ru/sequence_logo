@@ -2,6 +2,8 @@ require_relative '../../sequence_logo'
 require 'shellwords'
 
 begin
+  include SequenceLogo
+
   doc = <<-EOS
   sequence_logo is a tool for drawing motif logos. It is able to process PCM files either as a position matrix (*.pat or *.pcm), or in FASTA format (file extensions: .mfa, .fasta, .plain), or in SMall BiSMark format (.xml), or in IUPAC format (any other extension).
   Usage:
@@ -36,14 +38,18 @@ begin
   logo_folder = options[:logo_folder]
   Dir.mkdir(logo_folder)  unless Dir.exist?(logo_folder)
 
+  scheme_dir = File.join(AssetsPath, options[:scheme])
+  letter_images = CanvasFactory.letter_images(scheme_dir)
+  canvas_factory = CanvasFactory.new(letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit])
+
   if options[:sequence]
     sequence = options[:sequence]
     output_filename = File.join(logo_folder, "#{sequence}.png")
-    SequenceLogo.draw_sequence_logo(sequence, options).write(output_filename)
+    Sequence.new(sequence).render(canvas_factory).write(output_filename)
   elsif options[:sequence_w_snp]
     sequence_w_snp = options[:sequence_w_snp]
     output_filename = File.join(logo_folder, sequence_w_snp.gsub(/[\[\]\/]/, '_') + ".png")
-    SequenceLogo.draw_sequence_w_snp_logo(sequence_w_snp, options).write(output_filename)
+    SequenceWithSNP.from_string(sequence_w_snp).render(canvas_factory).write(output_filename)
   end
 
   filenames = argv
@@ -58,11 +64,17 @@ begin
     filename_wo_ext = File.basename(filename, File.extname(filename))
     if [:direct, :both].include?(options[:orientation])
       direct_output = File.join(logo_folder, "#{filename_wo_ext}_direct.png")
-      SequenceLogo.draw_ppm_logo(ppm, options).write(direct_output)
+      PPMLogo.new(ppm,
+                  icd_mode: options[:icd_mode],
+                  words_count: options[:words_count],
+                  enable_threshold_lines: options[:threshold_lines]).render(canvas_factory).write(direct_output)
     end
     if [:revcomp, :both].include?(options[:orientation])
       revcomp_output = File.join(logo_folder, "#{filename_wo_ext}_revcomp.png")
-      SequenceLogo.draw_ppm_logo(ppm.revcomp, options).write(revcomp_output)
+      PPMLogo.new(ppm.revcomp,
+                  icd_mode: options[:icd_mode],
+                  words_count: options[:words_count],
+                  enable_threshold_lines: options[:threshold_lines]).render(canvas_factory).write(revcomp_output)
     end
   end
 rescue => err

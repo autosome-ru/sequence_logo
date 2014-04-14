@@ -77,7 +77,7 @@ module SequenceLogo
     end
 
     def letter_index(letter)
-      {'A' => 0 ,'C' => 1,'G' => 2 ,'T' => 3}[letter.upcase]
+      {'A' => 0 ,'C' => 1,'G' => 2 ,'T' => 3}[letter.to_s.upcase]
     end
 
     def self.letter_images(scheme_dir)

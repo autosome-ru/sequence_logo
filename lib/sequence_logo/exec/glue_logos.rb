@@ -4,6 +4,8 @@ require 'cgi'
 require 'tempfile'
 
 begin
+  include SequenceLogo
+
   doc = <<-EOS
   Usage:
     glue_logos <output file> <alignment infos file>
@@ -50,7 +52,6 @@ begin
     raise ArgumentError, 'Specify alignment infos'
   end
 
-  include SequenceLogo
   alignment = Alignment.new
   alignment_infos.each{|line|
     filename, shift, orientation, motif_name = line.strip.split("\t")
