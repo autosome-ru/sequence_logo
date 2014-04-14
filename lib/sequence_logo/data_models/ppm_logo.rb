@@ -1,0 +1,63 @@
+require_relative '../canvases'
+
+module SequenceLogo
+  # wrapper around PPM to make it possible to configure rendering in a flexible way
+  class PPMLogo
+    attr_reader :ppm, :words_count, :icd_mode, :enable_threshold_lines
+
+    def initialize(ppm, options = {})
+      @ppm = ppm
+      @words_count = options[:words_count]
+      @icd_mode = options[:icd_mode]
+      @enable_threshold_lines = options[:enable_threshold_lines]
+
+      @ppm.words_count = @words_count  if @words_count
+      unless ppm.words_count
+        report "words count for PPM is undefined, assuming weblogo mode"
+        @icd_mode = :weblogo
+      end
+    end
+
+    def length
+      ppm.length
+    end
+
+    def name
+      ppm.name
+    end
+
+    def revcomp
+      PPMLogo.new(ppm.revcomp, words_count: words_count, icd_mode: icd_mode, enable_threshold_lines: enable_threshold_lines)
+    end
+
+    def logo_matrix
+      ppm.get_logo(icd_mode)
+    end
+
+    def render(canvas_factory)
+      canvas = LogoCanvas.new(canvas_factory)
+      if icd_mode == :discrete
+        canvas.background(Magick::HatchFill.new('white', 'white'))
+        if enable_threshold_lines
+          canvas.draw_threshold_line(ppm.get_line(ppm.icd2of4))
+          canvas.draw_threshold_line(ppm.get_line(ppm.icdThc))
+          canvas.draw_threshold_line(ppm.get_line(ppm.icdTlc))
+        end
+      else
+        canvas.background(Magick::HatchFill.new('white', 'bisque'))
+      end
+
+      logo_matrix.each do |position|
+        canvas.add_position_ordered( position_sorted_by_height(position) )
+      end
+      canvas.image
+    end
+
+    # [3,1,1,2] ==> [[3, 0],[2, 3],[1, 1],[1, 2]] (derived from [[3, 'A'],[2,'T'],[1,'C'],[1,'G']])
+    def position_sorted_by_height(position)
+      # sort by [count, letter_index] allows us to make stable sort by count (it's useful for predictable order of same-height nucleotides)
+      position.each_with_index.sort_by{|count, letter_index| [count, letter_index] }.reverse
+    end
+    private :position_sorted_by_height
+  end
+end
