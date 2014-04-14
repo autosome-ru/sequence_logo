@@ -38,16 +38,17 @@ SequenceLogo consists of two tools:
 
 * Tool **glue_logos** generates a single image of aligned motifs.
 
-      `glue_logos <output file> <file with alignment infos>`
-    
+      ```glue_logos <output file> <file with alignment infos>```
+
   or
       
-      `<alignment infos> | glue_logos <output file>`
+      <alignment infos> | glue_logos <output file>
 
-  Input data comes either from file with alignments or from stdin. *glue_logos* is designated to work fine with macroape *align_motifs* tool and has input format the same as output format of *align_motifs* tool:  
-      pcm_file_1  shift_1  orientation_1  
-      pcm_file_2  shift_2  orientation_2        
-      pcm_file_3  shift_3  orientation_3  
+  Input data comes either from file with alignments or from stdin. *glue_logos* is designated to work fine with macroape *align_motifs* tool and has input format the same as output format of *align_motifs* tool:
+
+      pcm_file_1  shift_1  orientation_1  [motif_name_1]
+      pcm_file_2  shift_2  orientation_2  [motif_name_2]
+      pcm_file_3  shift_3  orientation_3  [motif_name_3]
       
   So it's simple to run
   
