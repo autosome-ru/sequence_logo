@@ -24,10 +24,6 @@ module SequenceLogo
     end
 
     def shifted_logo(image, shift)
-      # shifted_logo = Magick::ImageList.new
-      # shifted_logo.set_minimal_size(shift * x_unit + image.columns, image.rows)
-      # shifted_logo.put_image_at(image, shift * x_unit, 0)
-      # shifted_logo.flatten_images
       canvas = HorizontalGluingCanvas.new
       canvas.add_image Magick::Image.new(shift * x_unit, image.rows){ self.background_color = 'transparent' }
       canvas.add_image image
@@ -35,11 +31,6 @@ module SequenceLogo
     end
 
     def logo_with_name(image, name)
-      # named_logo = Magick::ImageList.new
-      # named_logo.set_minimal_size(logo_shift + image.columns, image.rows)
-      # named_logo.put_image_at(text_image(name, image.rows), 0, 0)
-      # named_logo.put_image_at(image, logo_shift, 0)
-      # named_logo.flatten_images
       canvas = HorizontalGluingCanvas.new
       canvas.add_image text_image(name, image.rows)
       canvas.add_image image

@@ -36,7 +36,7 @@ module SequenceLogo
     end
 
     def revcomp
-      items_reversed = alignable_items.map{|item|
+      items_reversed = @alignable_items.map{|item|
         shift_reversed = rightmost_position - item.shift - item.length
         Item.new(item.object.revcomp, shift_reversed)
       }

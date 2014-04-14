@@ -20,8 +20,7 @@ begin
 
   argv = ARGV
   total_orientation = :direct
-  # ToDo: should threshold_lines be true here?
-  default_options = {x_unit: 30, y_unit: 60, words_count: nil, icd_mode: :discrete, threshold_lines: true, scheme: 'nucl_simpa', logo_shift: 300, text_size: 24}
+  default_options = {x_unit: 30, y_unit: 60, words_count: nil, icd_mode: :discrete, threshold_lines: false, scheme: 'nucl_simpa', logo_shift: 300, text_size: 24}
   cli = SequenceLogo::CLI.new(default_options)
   cli.instance_eval do
     parser.banner = doc
@@ -69,17 +68,12 @@ begin
                           words_count: options[:words_count],
                           enable_threshold_lines: options[:threshold_lines])
     alignment += Alignment::Item.new(ppm_logo, shift)
-
-
-    # [filename, shift, orientation, motif_name, ppm]
   }
 
   scheme_dir = File.join(AssetsPath, options[:scheme])
   letter_images = CanvasFactory.letter_images(scheme_dir)
   canvas_factory = CanvasFactory.new(letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit],
                                                     text_size: options[:text_size], logo_shift: options[:logo_shift])
-
-  # alignment.render(canvas_factory)
 
   extname = File.extname(output_file)
   basename = File.basename(output_file, extname)
@@ -88,9 +82,6 @@ begin
   reverse_output_filename = File.join(dirname, "#{basename}_revcomp#{extname}")
 
   if total_orientation == :both
-
-    # generate_glued_logo(alignment_infos, options, :direct, File.join(dirname, "#{basename}_direct#{extname}"))
-    # generate_glued_logo(alignment_infos, options, :revcomp, File.join(dirname, "#{basename}_revcomp#{extname}"))
     alignment.render(canvas_factory).write('PNG:' + direct_output_filename)
     alignment.revcomp.render(canvas_factory).write('PNG:' + reverse_output_filename)
   else
@@ -99,7 +90,6 @@ begin
     else
       alignment.revcomp.render(canvas_factory).write('PNG:' + reverse_output_filename)
     end
-    # generate_glued_logo(alignment_infos, options, total_orientation, output_file)
   end
 
 rescue => err
