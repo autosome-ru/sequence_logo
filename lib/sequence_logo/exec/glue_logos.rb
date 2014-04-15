@@ -1,12 +1,11 @@
 require_relative '../../sequence_logo'
 require 'fileutils'
-require 'cgi'
 require 'tempfile'
 
 def load_alignment_infos(alignment_lines)
   alignment_lines.map{|line|
     filename, shift, orientation, motif_name = line.strip.split("\t")
-    motif_name ||= CGI.unescape(File.basename(filename, File.extname(filename)))
+    motif_name ||= File.basename(filename, File.extname(filename))
     shift = shift.to_i
     orientation = orientation.downcase.to_sym
 
