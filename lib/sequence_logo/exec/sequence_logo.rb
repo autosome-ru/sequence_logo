@@ -61,7 +61,7 @@ begin
 
     checkerr("bad input file: #{filename}") { ppm == nil }
 
-    filename_wo_ext = File.basename(filename, File.extname(filename))
+    filename_wo_ext = File.basename_wo_extname(filename)
     if [:direct, :both].include?(options[:orientation])
       direct_output = File.join(logo_folder, "#{filename_wo_ext}_direct.png")
       PPMLogo.new(ppm,

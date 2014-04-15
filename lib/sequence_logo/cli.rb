@@ -1,5 +1,7 @@
 require 'fileutils'
 require 'optparse'
+require_relative 'support'
+
 module SequenceLogo
   class CLI
     attr_reader :options

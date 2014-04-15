@@ -48,12 +48,6 @@ def readlines_from_file_or_stdin(argv, options = {})
   lines
 end
 
-class File
-  def self.basename_wo_extname(filename)
-    File.basename(filename, File.extname(filename))
-  end
-end
-
 def direct_output_filename(output_file)
   extname = File.extname(output_file)
   basename = File.basename_wo_extname(output_file)
