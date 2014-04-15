@@ -42,6 +42,9 @@ begin
   letter_images = SequenceLogo::CanvasFactory.letter_images(scheme_dir)
   canvas_factory = SequenceLogo::CanvasFactory.new(letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit])
 
+  raise "Specify either sequence or sequence with SNP, not both"  if options[:sequence] && options[:sequence_w_snp]
+  raise "Can't yet draw reverse complement of sequence/sequence with SNP due to uncertainity with output filename. Next version will fix this"  if (options[:sequence] || options[:sequence_w_snp]) && options[:orientation] != :direct
+
   objects_to_render = []
   if options[:sequence]
     sequence = options[:sequence]
@@ -74,6 +77,7 @@ begin
       end
     end
   end
+
   objects_to_render.each do |infos|
     infos[:renderable].render(canvas_factory).write("PNG:#{infos[:output_filename]}")
   end
