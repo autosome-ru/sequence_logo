@@ -3,9 +3,72 @@ require 'fileutils'
 require 'cgi'
 require 'tempfile'
 
-begin
-  include SequenceLogo
+def load_alignment_infos(alignment_lines)
+  alignment_lines.map{|line|
+    filename, shift, orientation, motif_name = line.strip.split("\t")
+    motif_name ||= CGI.unescape(File.basename(filename, File.extname(filename)))
+    shift = shift.to_i
+    orientation = orientation.downcase.to_sym
 
+    ppm = get_ppm_from_file(filename)
+    checkerr("bad input file: #{filename}") { ppm == nil }
+    ppm.name ||= motif_name
+
+    raise 'Unknown orientation'  unless [:direct, :revcomp].include?(orientation)
+
+    ppm_oriented = (orientation == :direct) ? ppm : ppm.revcomp
+    {motif: ppm_oriented, shift: shift}
+  }
+end
+
+def make_logo_alignment(aligned_motifs, options)
+  alignment = SequenceLogo::Alignment.new
+  aligned_motifs.map {|motif_infos|
+    ppm_logo = SequenceLogo::PPMLogo.new(motif_infos[:motif],
+                                        icd_mode: options[:icd_mode],
+                                        words_count: options[:words_count],
+                                        enable_threshold_lines: options[:threshold_lines])
+    alignment += SequenceLogo::Alignment::Item.new(ppm_logo, motif_infos[:shift])
+  }
+  alignment
+end
+
+def readlines_from_file_or_stdin(argv, options = {})
+  default_options = { source_not_given_msg: 'Specify input data',
+                      both_sources_given_msg: 'Specify either file with data or data itself in stdin, not both'}
+  options = default_options.merge(options)
+  raise options[:both_sources_given_msg]  if !argv.empty? && !$stdin.tty?
+  if !argv.empty?
+    lines = File.readlines(argv.first)
+  elsif !$stdin.tty?
+    lines = $stdin.readlines
+  else
+    raise ArgumentError, options[:source_not_given_msg]
+  end
+  lines
+end
+
+class File
+  def self.basename_wo_extname(filename)
+    File.basename(filename, File.extname(filename))
+  end
+end
+
+def direct_output_filename(output_file)
+  extname = File.extname(output_file)
+  basename = File.basename_wo_extname(output_file)
+  dirname = File.dirname(output_file)
+  File.join(dirname, "#{basename}_direct#{extname}")
+end
+
+def reverse_output_filename(output_file)
+  extname = File.extname(output_file)
+  basename = File.basename_wo_extname(output_file)
+  dirname = File.dirname(output_file)
+  File.join(dirname, "#{basename}_revcomp#{extname}")
+end
+
+begin
   doc = <<-EOS
   Usage:
     glue_logos <output file> <alignment infos file>
@@ -43,54 +106,23 @@ begin
   output_file = argv.shift
   raise ArgumentError, 'Specify output file'  unless output_file
 
-  raise 'You can specify alignment infos either from file or from stdin. Don\'t use both sources simultaneously' if !ARGV.empty? && !$stdin.tty?
-  if !ARGV.empty?
-    alignment_infos = File.readlines(ARGV.shift)
-  elsif !$stdin.tty?
-    alignment_infos = $stdin.readlines
-  else
-    raise ArgumentError, 'Specify alignment infos'
-  end
+  alignment_lines = readlines_from_file_or_stdin(argv,  source_not_given_msg: 'Specify alignment infos',
+                                                        both_sources_given_msg: 'You can specify alignment infos either from file or from stdin. Don\'t use both sources simultaneously')
+  alignment = make_logo_alignment(load_alignment_infos(alignment_lines), options)
 
-  alignment = Alignment.new
-  alignment_infos.each{|line|
-    filename, shift, orientation, motif_name = line.strip.split("\t")
-    motif_name ||= CGI.unescape(File.basename(filename, File.extname(filename)))
-    ppm = get_ppm_from_file(filename)
-    shift = shift.to_i
-
-    checkerr("bad input file: #{filename}") { ppm == nil }
-    raise 'Unknown orientation'  unless %w[direct revcomp].include?(orientation.downcase)
-
-    ppm_oriented = (orientation.downcase == 'direct') ? ppm : ppm.revcomp
-    ppm_oriented.name ||= motif_name
-    ppm_logo = PPMLogo.new(ppm_oriented,
-                          icd_mode: options[:icd_mode],
-                          words_count: options[:words_count],
-                          enable_threshold_lines: options[:threshold_lines])
-    alignment += Alignment::Item.new(ppm_logo, shift)
-  }
-
-  scheme_dir = File.join(AssetsPath, options[:scheme])
-  letter_images = CanvasFactory.letter_images(scheme_dir)
-  canvas_factory = CanvasFactory.new(letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit],
+  scheme_dir = File.join(SequenceLogo::AssetsPath, options[:scheme])
+  letter_images = SequenceLogo::CanvasFactory.letter_images(scheme_dir)
+  canvas_factory = SequenceLogo::CanvasFactory.new(letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit],
                                                     text_size: options[:text_size], logo_shift: options[:logo_shift])
 
-  extname = File.extname(output_file)
-  basename = File.basename(output_file, extname)
-  dirname = File.dirname(output_file)
-  direct_output_filename = File.join(dirname, "#{basename}_direct#{extname}")
-  reverse_output_filename = File.join(dirname, "#{basename}_revcomp#{extname}")
-
-  if total_orientation == :both
-    alignment.render(canvas_factory).write('PNG:' + direct_output_filename)
-    alignment.revcomp.render(canvas_factory).write('PNG:' + reverse_output_filename)
-  else
-    if total_orientation == :direct
-      alignment.render(canvas_factory).write('PNG:' + direct_output_filename)
-    else
-      alignment.revcomp.render(canvas_factory).write('PNG:' + reverse_output_filename)
-    end
+  case total_orientation
+  when :direct
+    alignment.render(canvas_factory).write('PNG:' + direct_output_filename(output_file))
+  when :revcomp
+    alignment.revcomp.render(canvas_factory).write('PNG:' + reverse_output_filename(output_file))
+  when :both
+    alignment.render(canvas_factory).write('PNG:' + direct_output_filename(output_file))
+    alignment.revcomp.render(canvas_factory).write('PNG:' + reverse_output_filename(output_file))
   end
 
 rescue => err
