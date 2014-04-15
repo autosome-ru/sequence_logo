@@ -1,13 +1,39 @@
 require_relative '../../sequence_logo'
 require 'shellwords'
 
+# [{renderable: , name: }] --> [{renderable: , filename: }]
+def in_necessary_orientations(objects_to_render, orientation, logo_folder)
+  objects_to_render.map do |infos|
+    case orientation
+    when :direct
+      {renderable: infos[:renderable], filename: File.join(logo_folder, "#{infos[:name]}.png") }
+    when :revcomp
+      {renderable: infos[:renderable].revcomp, filename: File.join(logo_folder, "#{infos[:name]}.png") }
+    when :both
+      [ {renderable: infos[:renderable], filename: File.join(logo_folder, "#{infos[:name]}_direct.png") },
+        {renderable: infos[:renderable].revcomp, filename: File.join(logo_folder, "#{infos[:name]}_revcomp.png") } ]
+    end
+  end.flatten
+end
+
+def arglist_augmented_with_stdin(argv)
+  result = argv
+  result += $stdin.read.shellsplit  unless $stdin.tty?
+  result
+end
+
 begin
   include SequenceLogo
 
   doc = <<-EOS
-  sequence_logo is a tool for drawing motif logos. It is able to process PCM files either as a position matrix (*.pat or *.pcm), or in FASTA format (file extensions: .mfa, .fasta, .plain), or in SMall BiSMark format (.xml), or in IUPAC format (any other extension).
+  sequence_logo is a tool for drawing motif and sequence logos
+  It is able to process
+  - PCM / PPM format i.e. position count/frequency matrix (*.pat or *.pcm)
+  - FASTA format (file extensions: .mfa, .fasta, .plain)
+  - SMall BiSMark format (.xml)
+  - IUPAC format (any other extension)
   Usage:
-    sequence_logo [options] <pcm/ppm file>...
+    sequence_logo [options] <motif file>...
       or
     ls pcm_folder/*.pcm | sequence_logo [options]
   EOS
@@ -26,11 +52,11 @@ begin
       options[:orientation] = v
     end
 
-    parser.on('--snp-sequence SEQUENCE', 'Specify sequence with SNP (like ATCTC[C/G]CCTAAT) instead of motif') do |v|
-      options[:sequence_w_snp] = v
+    parser.on('--snp-sequence', 'Specify sequences with SNP (like ATCTC[C/G]CCTAAT) instead of motif filenames') do
+      options[:sequence_w_snp] = true
     end
-    parser.on('--sequence SEQUENCE', 'Specify sequence (like ATCTCGCCTAAT) instead of motif') do |v|
-      options[:sequence] = v
+    parser.on('--sequence', 'Specify sequence (like ATCTCGCCTAAT) instead of motif filenames') do
+      options[:sequence] = true
     end
   end
   options = cli.parse_options!(argv)
@@ -42,22 +68,28 @@ begin
   letter_images = SequenceLogo::CanvasFactory.letter_images(scheme_dir)
   canvas_factory = SequenceLogo::CanvasFactory.new(letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit])
 
-  raise "Specify either sequence or sequence with SNP, not both"  if options[:sequence] && options[:sequence_w_snp]
-  raise "Can't yet draw reverse complement of sequence/sequence with SNP due to uncertainity with output filename. Next version will fix this"  if (options[:sequence] || options[:sequence_w_snp]) && options[:orientation] != :direct
+  raise "Specify either sequence or sequence with SNP or none of them, but not both"  if options[:sequence] && options[:sequence_w_snp]
 
   objects_to_render = []
   if options[:sequence]
-    sequence = options[:sequence]
-    objects_to_render << {renderable: SequenceLogo::Sequence.new(sequence),
-                          output_filename: File.join(logo_folder, "#{sequence}.png")}
+    sequences = arglist_augmented_with_stdin(argv)
+    raise ArgumentError, 'Specify at least one sequence'  if sequences.empty?
+
+    sequences.each do |sequence|
+      objects_to_render << {renderable: SequenceLogo::Sequence.new(sequence),
+                            name: File.join(logo_folder, sequence)}
+    end
   elsif options[:sequence_w_snp]
-    sequence_w_snp = options[:sequence_w_snp]
-    objects_to_render << {renderable: SequenceLogo::SequenceWithSNP.from_string(sequence_w_snp),
-                          output_filename: File.join(logo_folder, sequence_w_snp.gsub(/[\[\]\/]/, '_') + ".png")}
+    sequences = arglist_augmented_with_stdin(argv)
+    raise ArgumentError, 'Specify at least one sequence'  if sequences.empty?
+
+    sequences.each do |sequence_w_snp|
+      objects_to_render << {renderable: SequenceLogo::SequenceWithSNP.from_string(sequence_w_snp),
+                            name: File.join(logo_folder, sequence_w_snp.gsub(/[\[\]\/]/, '_'))}
+    end
   else
-    filenames = argv
-    filenames += $stdin.read.shellsplit  unless $stdin.tty?
-    raise ArgumentError, 'Specify at least one motif file'  if filenames.empty? && !options[:sequence] && !options[:sequence_w_snp]
+    filenames = arglist_augmented_with_stdin(argv)
+    raise ArgumentError, 'Specify at least one motif file'  if filenames.empty?
 
     filenames.each do |filename|
       ppm = get_ppm_from_file(filename)
@@ -67,19 +99,12 @@ begin
                                         icd_mode: options[:icd_mode],
                                         words_count: options[:words_count],
                                         enable_threshold_lines: options[:threshold_lines])
-
-      filename_wo_ext = File.basename_wo_extname(filename)
-      if [:direct, :both].include?(options[:orientation])
-        objects_to_render << {renderable: logo, output_filename: File.join(logo_folder, "#{filename_wo_ext}_direct.png")}
-      end
-      if [:revcomp, :both].include?(options[:orientation])
-        objects_to_render << {renderable: logo.revcomp, output_filename: File.join(logo_folder, "#{filename_wo_ext}_revcomp.png")}
-      end
+      objects_to_render << {renderable: logo, name: File.join(logo_folder, File.basename_wo_extname(filename))}
     end
   end
 
-  objects_to_render.each do |infos|
-    infos[:renderable].render(canvas_factory).write("PNG:#{infos[:output_filename]}")
+  in_necessary_orientations(objects_to_render, options[:orientation], logo_folder).each do |infos|
+    infos[:renderable].render(canvas_factory).write("PNG:#{infos[:filename]}")
   end
 rescue => err
   $stderr.puts "\n#{err}\n#{err.backtrace.first(5).join("\n")}\n\nUse --help option for help\n\n#{doc}"
