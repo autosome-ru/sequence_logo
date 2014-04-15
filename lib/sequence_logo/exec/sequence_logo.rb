@@ -13,7 +13,7 @@ begin
   EOS
 
   argv = ARGV
-  default_options = {x_unit: 30, y_unit: 60, words_count: nil, orientation: :both, logo_folder: '.', icd_mode: :discrete, threshold_lines: true, scheme: 'nucl_simpa'}
+  default_options = {x_unit: 30, y_unit: 60, words_count: nil, orientation: :direct, logo_folder: '.', icd_mode: :discrete, threshold_lines: true, scheme: 'nucl_simpa'}
   cli = SequenceLogo::CLI.new(default_options)
   cli.instance_eval do
     parser.banner = doc
@@ -38,44 +38,44 @@ begin
   logo_folder = options[:logo_folder]
   Dir.mkdir(logo_folder)  unless Dir.exist?(logo_folder)
 
-  scheme_dir = File.join(AssetsPath, options[:scheme])
-  letter_images = CanvasFactory.letter_images(scheme_dir)
-  canvas_factory = CanvasFactory.new(letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit])
+  scheme_dir = File.join(SequenceLogo::AssetsPath, options[:scheme])
+  letter_images = SequenceLogo::CanvasFactory.letter_images(scheme_dir)
+  canvas_factory = SequenceLogo::CanvasFactory.new(letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit])
 
+  objects_to_render = []
   if options[:sequence]
     sequence = options[:sequence]
-    output_filename = File.join(logo_folder, "#{sequence}.png")
-    Sequence.new(sequence).render(canvas_factory).write(output_filename)
+    objects_to_render << {renderable: SequenceLogo::Sequence.new(sequence),
+                          output_filename: File.join(logo_folder, "#{sequence}.png")}
   elsif options[:sequence_w_snp]
     sequence_w_snp = options[:sequence_w_snp]
-    output_filename = File.join(logo_folder, sequence_w_snp.gsub(/[\[\]\/]/, '_') + ".png")
-    SequenceWithSNP.from_string(sequence_w_snp).render(canvas_factory).write(output_filename)
+    objects_to_render << {renderable: SequenceLogo::SequenceWithSNP.from_string(sequence_w_snp),
+                          output_filename: File.join(logo_folder, sequence_w_snp.gsub(/[\[\]\/]/, '_') + ".png")}
+  else
+    filenames = argv
+    filenames += $stdin.read.shellsplit  unless $stdin.tty?
+    raise ArgumentError, 'Specify at least one motif file'  if filenames.empty? && !options[:sequence] && !options[:sequence_w_snp]
+
+    filenames.each do |filename|
+      ppm = get_ppm_from_file(filename)
+      checkerr("bad input file: #{filename}") { ppm == nil }
+
+      logo = SequenceLogo::PPMLogo.new( ppm,
+                                        icd_mode: options[:icd_mode],
+                                        words_count: options[:words_count],
+                                        enable_threshold_lines: options[:threshold_lines])
+
+      filename_wo_ext = File.basename_wo_extname(filename)
+      if [:direct, :both].include?(options[:orientation])
+        objects_to_render << {renderable: logo, output_filename: File.join(logo_folder, "#{filename_wo_ext}_direct.png")}
+      end
+      if [:revcomp, :both].include?(options[:orientation])
+        objects_to_render << {renderable: logo.revcomp, output_filename: File.join(logo_folder, "#{filename_wo_ext}_revcomp.png")}
+      end
+    end
   end
-
-  filenames = argv
-  filenames += $stdin.read.shellsplit  unless $stdin.tty?
-  raise ArgumentError, 'Specify at least one motif file'  if filenames.empty? && !options[:sequence] && !options[:sequence_w_snp]
-
-  filenames.each do |filename|
-    ppm = get_ppm_from_file(filename)
-
-    checkerr("bad input file: #{filename}") { ppm == nil }
-
-    filename_wo_ext = File.basename_wo_extname(filename)
-    if [:direct, :both].include?(options[:orientation])
-      direct_output = File.join(logo_folder, "#{filename_wo_ext}_direct.png")
-      PPMLogo.new(ppm,
-                  icd_mode: options[:icd_mode],
-                  words_count: options[:words_count],
-                  enable_threshold_lines: options[:threshold_lines]).render(canvas_factory).write(direct_output)
-    end
-    if [:revcomp, :both].include?(options[:orientation])
-      revcomp_output = File.join(logo_folder, "#{filename_wo_ext}_revcomp.png")
-      PPMLogo.new(ppm.revcomp,
-                  icd_mode: options[:icd_mode],
-                  words_count: options[:words_count],
-                  enable_threshold_lines: options[:threshold_lines]).render(canvas_factory).write(revcomp_output)
-    end
+  objects_to_render.each do |infos|
+    infos[:renderable].render(canvas_factory).write("PNG:#{infos[:output_filename]}")
   end
 rescue => err
   $stderr.puts "\n#{err}\n#{err.backtrace.first(5).join("\n")}\n\nUse --help option for help\n\n#{doc}"
