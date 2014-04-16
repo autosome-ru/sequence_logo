@@ -28,7 +28,7 @@ begin
   doc = <<-EOS
   sequence_logo is a tool for drawing motif and sequence logos
   It is able to process
-  - PCM / PPM format i.e. position count/frequency matrix (*.pat or *.pcm)
+  - PCM / PPM format i.e. position count/frequency matrix (*.pat or *.pcm) - preferable
   - FASTA format (file extensions: .mfa, .fasta, .plain)
   - SMall BiSMark format (.xml)
   - IUPAC format (any other extension)
@@ -36,6 +36,11 @@ begin
     sequence_logo [options] <motif file>...
       or
     ls pcm_folder/*.pcm | sequence_logo [options]
+      or
+    sequence_logo --sequence <sequence>...
+      or
+    sequence_logo --snp-sequence <sequence with SNP>...
+
   EOS
 
   argv = ARGV
