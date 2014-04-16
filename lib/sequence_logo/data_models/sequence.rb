@@ -14,7 +14,7 @@ module SequenceLogo
     end
 
     def revcomp
-      Sequence.revcomp(sequence)
+      Sequence.new(Sequence.revcomp(sequence), name: name)
     end
 
     def render(canvas_factory)
