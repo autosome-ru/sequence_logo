@@ -62,7 +62,7 @@ module SequenceLogo
     def rescale_letters(letters_with_heights)
       letters_with_heights
         .reject{|part_of_height, letter| y_unit * part_of_height <= 1 }
-        .map{|part_of_height, letter| [(y_unit * part_of_height), letter] }
+        .map{|part_of_height, letter| [(y_unit * part_of_height).round, letter] }
     end
     private :logo_for_ordered_letters_nonscaling, :rescale_letters
 
