@@ -110,9 +110,9 @@ begin
 
   case total_orientation
   when :direct
-    alignment.render(canvas_factory).write('PNG:' + direct_output_filename(output_file))
+    alignment.render(canvas_factory).write('PNG:' + output_file)
   when :revcomp
-    alignment.revcomp.render(canvas_factory).write('PNG:' + reverse_output_filename(output_file))
+    alignment.revcomp.render(canvas_factory).write('PNG:' + output_file)
   when :both
     alignment.render(canvas_factory).write('PNG:' + direct_output_filename(output_file))
     alignment.revcomp.render(canvas_factory).write('PNG:' + reverse_output_filename(output_file))
