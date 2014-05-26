@@ -6,12 +6,12 @@ def in_necessary_orientations(objects_to_render, orientation, logo_folder)
   objects_to_render.map do |infos|
     case orientation
     when :direct
-      {renderable: infos[:renderable], filename: File.join(logo_folder, "#{infos[:name]}.png") }
+      {renderable: infos[:renderable], filename: "#{infos[:name]}.png" }
     when :revcomp
-      {renderable: infos[:renderable].revcomp, filename: File.join(logo_folder, "#{infos[:name]}.png") }
+      {renderable: infos[:renderable].revcomp, filename: "#{infos[:name]}.png" }
     when :both
-      [ {renderable: infos[:renderable], filename: File.join(logo_folder, "#{infos[:name]}_direct.png") },
-        {renderable: infos[:renderable].revcomp, filename: File.join(logo_folder, "#{infos[:name]}_revcomp.png") } ]
+      [ {renderable: infos[:renderable], filename: "#{infos[:name]}_direct.png" },
+        {renderable: infos[:renderable].revcomp, filename: "#{infos[:name]}_revcomp.png" } ]
     end
   end.flatten
 end
@@ -104,12 +104,13 @@ begin
                                         icd_mode: options[:icd_mode],
                                         words_count: options[:words_count],
                                         enable_threshold_lines: options[:threshold_lines])
-      objects_to_render << {renderable: logo, name: File.join(logo_folder, File.basename_wo_extname(filename))}
+      objects_to_render << {renderable: logo, name: File.basename_wo_extname(filename)}
     end
   end
 
   in_necessary_orientations(objects_to_render, options[:orientation], logo_folder).each do |infos|
-    infos[:renderable].render(canvas_factory).write("PNG:#{infos[:filename]}")
+    filename = File.join(logo_folder, infos[:filename])
+    infos[:renderable].render(canvas_factory).write("PNG:#{filename}")
   end
 rescue => err
   $stderr.puts "\n#{err}\n#{err.backtrace.first(5).join("\n")}\n\nUse --help option for help\n\n#{doc}"
