@@ -1,3 +1,7 @@
+Fix word count to calculate column-wise word-counts where possible! Selex logos are bad
+
+Make use of bioinform gem
+
 AssetsPath shouldn't be used at draw_logo level because it makes it impossible to change scheme on one folder that is outside the gem
 And how to make possible use schemes inside the assets path
 
