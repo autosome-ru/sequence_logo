@@ -23,7 +23,10 @@ module SequenceLogo
     end
 
     def render(canvas_factory)
-      @direct_image
+      layers = Magick::ImageList.new
+      layers.put_image_at(@direct_image, 0, 0)
+      layers.unshift Magick::Image.new(@direct_image.columns, @direct_image.rows, canvas_factory.background_fill)
+      layers.flatten_images
     end
   end
 end

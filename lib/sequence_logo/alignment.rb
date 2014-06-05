@@ -48,7 +48,7 @@ module SequenceLogo
       items_normalized.each do |item|
         canvas.add_image item.render(canvas_factory)
       end
-      canvas.background(Magick::HatchFill.new('white', 'white'))
+      canvas.background(canvas_factory.background_fill)
       canvas.image
     end
 

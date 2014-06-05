@@ -44,7 +44,9 @@ begin
   EOS
 
   argv = ARGV
-  default_options = {x_unit: 30, y_unit: 60, words_count: nil, orientation: :direct, logo_folder: '.', icd_mode: :discrete, threshold_lines: true, scheme: 'nucl_simpa'}
+  default_options = { x_unit: 30, y_unit: 60, scheme: 'nucl_simpa',
+                      words_count: nil, orientation: :direct, icd_mode: :discrete, threshold_lines: true,
+                      logo_folder: '.', background_color: 'white' }
   cli = SequenceLogo::CLI.new(default_options)
   cli.instance_eval do
     parser.banner = doc
@@ -63,6 +65,13 @@ begin
     parser.on('--sequence', 'Specify sequence (like ATCTCGCCTAAT) instead of motif filenames') do
       options[:sequence] = true
     end
+    parser.on('--bg-fill FILL', 'Background fill. Specify either `transparent` or `color` or `color,hatch_color`') do |v|
+      if v.match(/^\w+,\w+$/)
+        options[:background_fill] = Magick::HatchFill.new(*v.split(','))
+      else
+        options[:background_fill] = Magick::SolidFill.new(v)
+      end
+    end
   end
   options = cli.parse_options!(argv)
 
@@ -71,7 +80,8 @@ begin
 
   scheme_dir = File.join(SequenceLogo::AssetsPath, options[:scheme])
   letter_images = SequenceLogo::CanvasFactory.letter_images(scheme_dir)
-  canvas_factory = SequenceLogo::CanvasFactory.new(letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit])
+  canvas_factory = SequenceLogo::CanvasFactory.new( letter_images, x_unit: options[:x_unit], y_unit: options[:y_unit],
+                                                    background_fill: options[:background_fill] )
 
   raise "Specify either sequence or sequence with SNP or none of them, but not both"  if options[:sequence] && options[:sequence_w_snp]
 

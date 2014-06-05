@@ -30,7 +30,7 @@ module SequenceLogo
 
     def render(canvas_factory)
       canvas = LogoCanvas.new(canvas_factory)
-      canvas.background(Magick::HatchFill.new('white', 'white'))
+      canvas.background(canvas_factory.background_fill)
       left.each_char{|letter| canvas.add_letter(letter) }
       canvas.add_position_ordered(snp_position_heights)
       right.each_char{|letter| canvas.add_letter(letter) }

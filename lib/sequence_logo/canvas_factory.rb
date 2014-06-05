@@ -3,7 +3,7 @@ require_relative 'canvases'
 
 module SequenceLogo
   class CanvasFactory
-    attr_reader :x_unit, :y_unit, :text_size, :logo_shift
+    attr_reader :x_unit, :y_unit, :text_size, :logo_shift, :background_fill
     attr_reader :letter_images
 
     def initialize(letter_images, options = {})
@@ -12,6 +12,7 @@ module SequenceLogo
       @x_unit = options[:x_unit] || 30
       @y_unit = options[:y_unit] || 60
       @text_size = options[:text_size] || 24
+      @background_fill = options[:background_fill] || Magick::SolidFill.new('transparent')
     end
 
     def text_image(text, img_height = y_unit)

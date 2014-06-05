@@ -36,15 +36,11 @@ module SequenceLogo
 
     def render(canvas_factory)
       canvas = LogoCanvas.new(canvas_factory)
-      if icd_mode == :discrete
-        canvas.background(Magick::HatchFill.new('white', 'white'))
-        if enable_threshold_lines
-          canvas.draw_threshold_line(ppm.get_line(ppm.icd2of4))
-          canvas.draw_threshold_line(ppm.get_line(ppm.icdThc))
-          canvas.draw_threshold_line(ppm.get_line(ppm.icdTlc))
-        end
-      else
-        canvas.background(Magick::HatchFill.new('white', 'bisque'))
+      canvas.background(canvas_factory.background_fill)
+      if icd_mode == :discrete && enable_threshold_lines
+        canvas.draw_threshold_line(ppm.get_line(ppm.icd2of4))
+        canvas.draw_threshold_line(ppm.get_line(ppm.icdThc))
+        canvas.draw_threshold_line(ppm.get_line(ppm.icdTlc))
       end
 
       logo_matrix.each do |position|

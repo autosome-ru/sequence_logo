@@ -19,7 +19,7 @@ module SequenceLogo
 
     def render(canvas_factory)
       canvas = LogoCanvas.new(canvas_factory)
-      canvas.background(Magick::HatchFill.new('white', 'white'))
+      canvas.background(canvas_factory.background_fill)
       sequence.each_char do |letter|
         canvas.add_letter(letter)
       end
