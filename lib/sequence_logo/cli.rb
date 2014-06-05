@@ -14,6 +14,7 @@ module SequenceLogo
     end
     def parser
       @parser ||= OptionParser.new do |opts|
+        opts.version = ::SequenceLogo::VERSION
         opts.on('-x', '--x-unit X_UNIT', 'Single letter width') do |v|
           options[:x_unit] = v.to_i
         end
