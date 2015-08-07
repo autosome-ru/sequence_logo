@@ -8,3 +8,5 @@ And how to make possible use schemes inside the assets path
 Make tests
 
 Wrap execs into methods
+
+remove SolidFill class because it's in a new version of RMagick
