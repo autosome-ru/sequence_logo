@@ -45,7 +45,7 @@ begin
 
   argv = ARGV
   default_options = { x_unit: 30, y_unit: 60, scheme: 'nucl_simpa',
-                      words_count: nil, orientation: :direct, icd_mode: :discrete, threshold_lines: true,
+                      orientation: :direct, icd_mode: :discrete, threshold_lines: true,
                       logo_folder: '.', background_color: 'white' }
   cli = SequenceLogo::CLI.new(default_options)
   cli.instance_eval do
@@ -107,12 +107,10 @@ begin
     raise ArgumentError, 'Specify at least one motif file'  if filenames.empty?
 
     filenames.each do |filename|
-      ppm = get_ppm_from_file(filename)
-      checkerr("bad input file: #{filename}") { ppm == nil }
+      ppm = Bioinform::MotifModel::PCM.from_file(filename)
 
       logo = SequenceLogo::PPMLogo.new( ppm,
                                         icd_mode: options[:icd_mode],
-                                        words_count: options[:words_count],
                                         enable_threshold_lines: options[:threshold_lines])
       objects_to_render << {renderable: logo, name: File.basename_wo_extname(filename)}
     end

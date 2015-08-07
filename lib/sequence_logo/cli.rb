@@ -21,9 +21,6 @@ module SequenceLogo
         opts.on('-y', '--y-unit Y_UNIT', 'Base letter height') do |v|
           options[:y_unit] = v.to_i
         end
-        opts.on('--words-count WEIGHT', 'Define alignment weight') do |v|
-          options[:words_count] = v.to_f
-        end
         opts.on('--icd-mode MODE', 'Calculation mode: discrete or weblogo', 'Weblogo is assumed if word count not given') do |v|
           options[:icd_mode] = v.to_sym
           raise ArgumentError, 'icd-mode can be either discrete or weblogo'  unless [:discrete, :weblogo].include?(options[:icd_mode])

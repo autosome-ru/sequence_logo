@@ -3,19 +3,12 @@ require_relative '../canvases'
 module SequenceLogo
   # wrapper around PPM to make it possible to configure rendering in a flexible way
   class PPMLogo
-    attr_reader :ppm, :words_count, :icd_mode, :enable_threshold_lines
+    attr_reader :ppm, :icd_mode, :enable_threshold_lines
 
     def initialize(ppm, options = {})
       @ppm = ppm
-      @words_count = options[:words_count]
       @icd_mode = options[:icd_mode]
       @enable_threshold_lines = options[:enable_threshold_lines]
-
-      @ppm.words_count = @words_count  if @words_count
-      unless ppm.words_count
-        report "words count for PPM is undefined, assuming weblogo mode"
-        @icd_mode = :weblogo
-      end
     end
 
     def length
@@ -27,7 +20,7 @@ module SequenceLogo
     end
 
     def revcomp
-      PPMLogo.new(ppm.revcomp, words_count: words_count, icd_mode: icd_mode, enable_threshold_lines: enable_threshold_lines)
+      PPMLogo.new(ppm.revcomp, icd_mode: icd_mode, enable_threshold_lines: enable_threshold_lines)
     end
 
     def logo_matrix
@@ -37,10 +30,11 @@ module SequenceLogo
     def render(canvas_factory)
       canvas = LogoCanvas.new(canvas_factory)
       canvas.background(canvas_factory.background_fill)
+      word_count = ppm.each_position.map{|pos| pos.inject(0.0, &:+) }.max
       if icd_mode == :discrete && enable_threshold_lines
-        canvas.draw_threshold_line(ppm.get_line(ppm.icd2of4))
-        canvas.draw_threshold_line(ppm.get_line(ppm.icdThc))
-        canvas.draw_threshold_line(ppm.get_line(ppm.icdTlc))
+        canvas.draw_threshold_line( scale(icd2of4(word_count), relative_to: icd4of4(word_count)) )
+        canvas.draw_threshold_line( scale(icdThc(word_count),  relative_to: icd4of4(word_count)) )
+        canvas.draw_threshold_line( scale(icdTlc(word_count),  relative_to: icd4of4(word_count)) )
       end
 
       logo_matrix.each do |position|

@@ -9,8 +9,7 @@ def load_alignment_infos(alignment_lines)
     shift = shift.to_i
     orientation = orientation.downcase.to_sym
 
-    ppm = get_ppm_from_file(filename)
-    checkerr("bad input file: #{filename}") { ppm == nil }
+    ppm = Bioinform::MotifModel::PCM.from_file(filename)
     ppm.name ||= motif_name
 
     raise 'Unknown orientation'  unless [:direct, :revcomp].include?(orientation)
@@ -25,7 +24,6 @@ def make_logo_alignment(aligned_motifs, options)
   aligned_motifs.map {|motif_infos|
     ppm_logo = SequenceLogo::PPMLogo.new(motif_infos[:motif],
                                         icd_mode: options[:icd_mode],
-                                        words_count: options[:words_count],
                                         enable_threshold_lines: options[:threshold_lines])
     alignment += SequenceLogo::Alignment::Item.new(ppm_logo, motif_infos[:shift])
   }
@@ -79,7 +77,7 @@ begin
   argv = ARGV
   total_orientation = :direct
   default_options = { x_unit: 30, y_unit: 60, logo_shift: 300, scheme: 'nucl_simpa',
-                      words_count: nil, icd_mode: :discrete, threshold_lines: false,
+                      icd_mode: :discrete, threshold_lines: false,
                       text_size: 24, background_color: 'white' }
   cli = SequenceLogo::CLI.new(default_options)
   cli.instance_eval do

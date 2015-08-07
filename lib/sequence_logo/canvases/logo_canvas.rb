@@ -1,4 +1,4 @@
-require 'RMagick'
+require 'rmagick'
 require_relative '../magick_support'
 require_relative 'horizontal_gluing_canvas'
 
