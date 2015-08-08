@@ -46,7 +46,8 @@ begin
   argv = ARGV
   default_options = { x_unit: 30, y_unit: 60, scheme: 'nucl_simpa',
                       orientation: :direct, icd_mode: :discrete, threshold_lines: true,
-                      logo_folder: '.', background_color: 'white' }
+                      logo_folder: '.', background_color: 'white',
+                      from_dinucleotide: false }
   cli = SequenceLogo::CLI.new(default_options)
   cli.instance_eval do
     parser.banner = doc
@@ -72,6 +73,8 @@ begin
         options[:background_fill] = Magick::SolidFill.new(v)
       end
     end
+
+    parser.on('--dinucleotide'){ options[:from_dinucleotide] = true }
   end
   options = cli.parse_options!(argv)
 
@@ -107,7 +110,11 @@ begin
     raise ArgumentError, 'Specify at least one motif file'  if filenames.empty?
 
     filenames.each do |filename|
-      ppm = Bioinform::MotifModel::PCM.from_file(filename)
+      if options[:from_dinucleotide]
+        ppm = Bioinform::MotifModel::DiPCM.from_file(filename).to_mono
+      else
+        ppm = Bioinform::MotifModel::PCM.from_file(filename)
+      end
 
       logo = SequenceLogo::PPMLogo.new( ppm,
                                         icd_mode: options[:icd_mode],
