@@ -17,5 +17,5 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = SequenceLogo::VERSION
   
-  gem.add_dependency('rmagick', '~> 2.13.1')
+  gem.add_dependency('rmagick', '~> 2.13')
 end
