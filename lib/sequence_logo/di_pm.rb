@@ -89,7 +89,7 @@ module Bioinform
           sum_dependent_on_first_letter(pos)
         } + [ sum_dependent_on_second_letter(matrix.last) ]
 
-        PCM.new(mono_matrix)
+        PCM.new(mono_matrix, validator: Bioinform::MotifModel::PCM::DIFFERENT_COUNTS_VALIDATOR)
       end
     end
 

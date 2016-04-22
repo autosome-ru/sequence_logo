@@ -113,7 +113,7 @@ begin
       if options[:from_dinucleotide]
         ppm = Bioinform::MotifModel::DiPCM.from_file(filename).to_mono
       else
-        ppm = Bioinform::MotifModel::PCM.from_file(filename)
+        ppm = Bioinform::MotifModel::PCM.from_file(filename, validator: Bioinform::MotifModel::PCM::DIFFERENT_COUNTS_VALIDATOR)
       end
 
       logo = SequenceLogo::PPMLogo.new( ppm,

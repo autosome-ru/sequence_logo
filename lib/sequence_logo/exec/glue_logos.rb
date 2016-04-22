@@ -9,7 +9,7 @@ def load_alignment_infos(alignment_lines)
     shift = shift.to_i
     orientation = orientation.downcase.to_sym
 
-    ppm = Bioinform::MotifModel::PCM.from_file(filename)
+    ppm = Bioinform::MotifModel::PCM.from_file(filename, validator: Bioinform::MotifModel::PCM::DIFFERENT_COUNTS_VALIDATOR)
     ppm.name ||= motif_name
 
     raise 'Unknown orientation'  unless [:direct, :revcomp].include?(orientation)

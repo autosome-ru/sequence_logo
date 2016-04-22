@@ -18,4 +18,5 @@ Gem::Specification.new do |gem|
   gem.version       = SequenceLogo::VERSION
   
   gem.add_dependency('rmagick', '~> 2.13')
+  gem.add_dependency('bioinform', '~> 0.3.1')
 end
