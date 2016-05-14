@@ -34,7 +34,8 @@ def readlines_from_file_or_stdin(argv, options = {})
   default_options = { source_not_given_msg: 'Specify input data',
                       both_sources_given_msg: 'Specify either file with data or data itself in stdin, not both'}
   options = default_options.merge(options)
-  raise options[:both_sources_given_msg]  if !argv.empty? && !$stdin.tty?
+  ## This check fails when glue_logos is run via unicorn. It looks that unicorn daemon redefines isatty of child process
+  # raise options[:both_sources_given_msg]  if !argv.empty? && !$stdin.tty?
   if !argv.empty?
     lines = File.readlines(argv.first)
   elsif !$stdin.tty?
