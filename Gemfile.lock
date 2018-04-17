@@ -1,0 +1,21 @@
+PATH
+  remote: .
+  specs:
+    sequence_logo (1.3.0)
+      bioinform (~> 0.3.1)
+      rmagick (~> 2.13)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    bioinform (0.3.1)
+    rmagick (2.16.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  sequence_logo!
+
+BUNDLED WITH
+   1.16.1

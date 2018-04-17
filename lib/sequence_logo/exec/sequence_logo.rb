@@ -16,9 +16,9 @@ def in_necessary_orientations(objects_to_render, orientation, logo_folder)
   end.flatten
 end
 
-def arglist_augmented_with_stdin(argv)
+def arglist_augmented_with_stdin(argv, from_stdin:)
   result = argv
-  result += $stdin.read.shellsplit  unless $stdin.tty?
+  result += $stdin.read.shellsplit  if from_stdin
   result
 end
 
@@ -35,7 +35,7 @@ begin
   Usage:
     sequence_logo [options] <motif file>...
       or
-    ls pcm_folder/*.pcm | sequence_logo [options]
+    ls pcm_folder/*.pcm | sequence_logo --from-stdin [options]
       or
     sequence_logo --sequence <sequence>...
       or
@@ -47,7 +47,7 @@ begin
   default_options = { x_unit: 30, y_unit: 60, scheme: 'nucl_simpa',
                       orientation: :direct, icd_mode: :discrete, threshold_lines: true,
                       logo_folder: '.', background_color: 'white',
-                      from_dinucleotide: false }
+                      from_dinucleotide: false, from_stdin: false }
   cli = SequenceLogo::CLI.new(default_options)
   cli.instance_eval do
     parser.banner = doc
@@ -73,6 +73,9 @@ begin
         options[:background_fill] = Magick::SolidFill.new(v)
       end
     end
+    parser.on('--from-stdin') {
+      options[:from_stdin] = true
+    }
 
     parser.on('--dinucleotide'){ options[:from_dinucleotide] = true }
   end
@@ -90,7 +93,7 @@ begin
 
   objects_to_render = []
   if options[:sequence]
-    sequences = arglist_augmented_with_stdin(argv)
+    sequences = arglist_augmented_with_stdin(argv, from_stdin: options[:from_stdin])
     raise ArgumentError, 'Specify at least one sequence'  if sequences.empty?
 
     sequences.each do |sequence|
@@ -98,7 +101,7 @@ begin
                             name: File.join(logo_folder, sequence)}
     end
   elsif options[:sequence_w_snp]
-    sequences = arglist_augmented_with_stdin(argv)
+    sequences = arglist_augmented_with_stdin(argv, from_stdin: options[:from_stdin])
     raise ArgumentError, 'Specify at least one sequence'  if sequences.empty?
 
     sequences.each do |sequence_w_snp|
@@ -106,7 +109,7 @@ begin
                             name: File.join(logo_folder, sequence_w_snp.gsub(/[\[\]\/]/, '_'))}
     end
   else
-    filenames = arglist_augmented_with_stdin(argv)
+    filenames = arglist_augmented_with_stdin(argv, from_stdin: options[:from_stdin])
     raise ArgumentError, 'Specify at least one motif file'  if filenames.empty?
 
     filenames.each do |filename|

@@ -30,20 +30,19 @@ def make_logo_alignment(aligned_motifs, options)
   alignment
 end
 
-def readlines_from_file_or_stdin(argv, options = {})
+def readlines_from_file_or_stdin(argv, from_stdin: , **options)
   default_options = { source_not_given_msg: 'Specify input data',
                       both_sources_given_msg: 'Specify either file with data or data itself in stdin, not both'}
   options = default_options.merge(options)
-  ## This check fails when glue_logos is run via unicorn. It looks that unicorn daemon redefines isatty of child process
-  # raise options[:both_sources_given_msg]  if !argv.empty? && !$stdin.tty?
-  if !argv.empty?
-    lines = File.readlines(argv.first)
-  elsif !$stdin.tty?
-    lines = $stdin.readlines
+  raise ArgumentError, options[:both_sources_given_msg]  if from_stdin && !argv.empty?
+  raise ArgumentError, options[:source_not_given_msg]  if !from_stdin && argv.empty?
+  if from_stdin || argv == ['-']
+    $stdin.readlines
+  elsif argv.length == 1
+    File.readlines(argv.first)
   else
-    raise ArgumentError, options[:source_not_given_msg]
+    raise ArgumentError, 'alignment should either be in stdin or in file, specified by arglist'
   end
-  lines
 end
 
 def direct_output_filename(output_file)
@@ -65,7 +64,7 @@ begin
   Usage:
     glue_logos <output file> <alignment infos file>
       or
-    <alignment infos file> | glue_logos <output file>
+    <alignment infos file> | glue_logos <output file> --from-stdin
 
   Alignment infos has the following format (tab separated)
   if motif names not specified - filenames are used as labels:
@@ -79,7 +78,7 @@ begin
   total_orientation = :direct
   default_options = { x_unit: 30, y_unit: 60, logo_shift: 300, scheme: 'nucl_simpa',
                       icd_mode: :discrete, threshold_lines: false,
-                      text_size: 24, background_color: 'white' }
+                      text_size: 24, background_color: 'white', from_stdin: false }
   cli = SequenceLogo::CLI.new(default_options)
   cli.instance_eval do
     parser.banner = doc
@@ -102,13 +101,18 @@ begin
         options[:background_fill] = Magick::SolidFill.new(v)
       end
     end
+
+    parser.on('--from-stdin') do 
+      options[:from_stdin] = true
+    end
   end
   options = cli.parse_options!(argv)
 
   output_file = argv.shift
   raise ArgumentError, 'Specify output file'  unless output_file
 
-  alignment_lines = readlines_from_file_or_stdin(argv,  source_not_given_msg: 'Specify alignment infos',
+  alignment_lines = readlines_from_file_or_stdin(argv,  from_stdin: options[:from_stdin],
+                                                        source_not_given_msg: 'Specify alignment infos',
                                                         both_sources_given_msg: 'You can specify alignment infos either from file or from stdin. Don\'t use both sources simultaneously')
   alignment = make_logo_alignment(load_alignment_infos(alignment_lines), options)
 
