@@ -1,0 +1,14 @@
+FROM ruby:alpine
+RUN apk add --virtual .builddeps --update  alpine-sdk curl gzip tar && \
+    curl -o ImageMagick-6.9.10-14.tar.gz "http://mirror.checkdomain.de/imagemagick/ImageMagick-6.9.10-14.tar.gz" && \
+    tar -zxf ImageMagick-6.9.10-14.tar.gz && \
+    apk add --update libgcc libgomp libjpeg-turbo-dev libpng-dev && \
+    cd ImageMagick-6.9.10-14 && \
+    ./configure && \
+    make && \
+    make install && \
+    gem install rmagick --no-document && \
+    apk del .builddeps && \
+    cd / && \
+    rm -rf ImageMagick-6.9.10-14.tar.gz ImageMagick-6.9.10-14 && \
+    rm -rf /var/cache/apk/*

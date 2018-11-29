@@ -1,0 +1,8 @@
+FROM ruby:slim
+RUN apt-get update && \
+    apt-get install -y ruby build-essential imagemagick libmagickcore-dev libmagickwand-dev pkg-config && \
+    gem install rmagick && \
+    apt-get purge -y build-essential libmagickcore-dev libmagickwand-dev pkg-config && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*

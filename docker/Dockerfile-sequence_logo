@@ -1,0 +1,6 @@
+FROM vorontsovie/rmagick:alpine
+RUN gem install sequence_logo
+WORKDIR /data
+ENTRYPOINT ["sequence_logo"]
+CMD ["--help"]
+# docker run --rm --mount type=bind,src=$(pwd),dst=/data sequence_logo motif.pcm
