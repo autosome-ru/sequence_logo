@@ -77,6 +77,10 @@ begin
       options[:from_stdin] = true
     }
 
+    parser.on('--output-file FILE', 'Resulting image name') {|fn|
+      options[:output_file] = fn
+    }
+
     parser.on('--dinucleotide'){ options[:from_dinucleotide] = true }
   end
   options = cli.parse_options!(argv)
@@ -126,8 +130,16 @@ begin
     end
   end
 
+  if options[:output_file]
+    if objects_to_render.size == 1
+      objects_to_render.first[:name] = options[:output_file].sub(/.png$/i, '') # force name
+    else
+      raise 'When output file is specified, the only one logo can be rendered'
+    end
+  end
+
   in_necessary_orientations(objects_to_render, options[:orientation], logo_folder).each do |infos|
-    filename = File.join(logo_folder, infos[:filename])
+    filename = File.absolute_path(infos[:filename], logo_folder)
     infos[:renderable].render(canvas_factory).write("PNG:#{filename}")
   end
 rescue => err
