@@ -1,5 +1,6 @@
 FROM vorontsovie/rmagick:alpine
-RUN gem install sequence_logo
+ARG SEQLOGO_VERSION=1.3.2
+RUN gem install sequence_logo -v "$SEQLOGO_VERSION"
 WORKDIR /data
 ENTRYPOINT ["sequence_logo"]
 CMD ["--help"]
