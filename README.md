@@ -35,10 +35,11 @@ SequenceLogo consists of two tools:
     * --orientation <direct|revcomp|both> - create logo for a direct, reverse-complement or both orientations of motif
     * --scheme FOLDER - name of folder containing nucleotide images
     * --threshold-lines - draw lines on specific levels
+    * --output-file - Specify filename for resulting image
 
 * Tool **glue_logos** generates a single image of aligned motifs.
 
-      ```glue_logos <output file> <file with alignment infos>```
+      glue_logos <output file> <file with alignment infos>
 
   or
       
