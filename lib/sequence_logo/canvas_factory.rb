@@ -74,7 +74,12 @@ module SequenceLogo
       else
         index = letter_index(letter)
       end
-      letter_images[index].dup.resize(x_size, y_size)
+      letter_clone = letter_images[index].dup
+      channels_clone = letter_clone.separate(Magick::AllChannels)
+      channels_clone.each{|channel|
+        channel.resize!(x_size, y_size)
+      }
+      channels_clone.combine
     end
 
     def letter_index(letter)
