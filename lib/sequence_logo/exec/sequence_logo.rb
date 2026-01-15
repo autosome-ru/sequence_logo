@@ -82,6 +82,8 @@ begin
     }
 
     parser.on('--dinucleotide'){ options[:from_dinucleotide] = true }
+
+    parser.on('--ppm-count N', 'Multiply PPM by N to get PCM'){|value| options[:ppm_count] = Float(value) }
   end
   options = cli.parse_options!(argv)
 
@@ -121,6 +123,14 @@ begin
         ppm = Bioinform::MotifModel::DiPCM.from_file(filename).to_mono
       else
         ppm = Bioinform::MotifModel::PCM.from_file(filename, validator: Bioinform::MotifModel::PCM::DIFFERENT_COUNTS_VALIDATOR)
+      end
+
+      if options[:ppm_count]
+        new_matrix = ppm.matrix.map{|position|
+          sum = position.sum(0.0)
+          position.map{|el| el * options[:ppm_count] / sum}
+        }
+        ppm = Bioinform::MotifModel::PCM.new(new_matrix)
       end
 
       logo = SequenceLogo::PPMLogo.new( ppm,
