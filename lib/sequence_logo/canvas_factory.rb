@@ -16,7 +16,7 @@ module SequenceLogo
     end
 
     def text_image(text, img_height = y_unit)
-      text_img = Magick::Image.new(logo_shift, img_height){ self.background_color = 'transparent' }
+      text_img = Magick::Image.new(logo_shift, img_height){|img| img.background_color = 'transparent' }
       annotation = Magick::Draw.new
       annotation.pointsize(text_size)
       annotation.text(10, img_height / 2, text)
@@ -26,7 +26,7 @@ module SequenceLogo
 
     def shifted_logo(image, shift)
       canvas = HorizontalGluingCanvas.new
-      canvas.add_image Magick::Image.new(shift * x_unit, image.rows){ self.background_color = 'transparent' }
+      canvas.add_image Magick::Image.new(shift * x_unit, image.rows){|img| img.background_color = 'transparent' }
       canvas.add_image image
       canvas.image
     end

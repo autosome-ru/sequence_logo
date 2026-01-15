@@ -9,7 +9,7 @@ module Magick
 
     # add transparent layer so that full canvas size can't be less than given size
     def set_minimal_size(x_size, y_size)
-      empty_image = Magick::Image.new(x_size, y_size){ self.background_color = 'transparent'}
+      empty_image = Magick::Image.new(x_size, y_size){|img| img.background_color = 'transparent' }
       self.unshift(empty_image)
     end
   end
